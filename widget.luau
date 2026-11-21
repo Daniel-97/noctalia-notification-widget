@@ -333,60 +333,60 @@ local function render()
     if head == "" then
       head = "?"
     end
-    local headRowChildren = { ui.label({ text = head, fontSize = fs(12), color = "on_surface" }) }
+    -- One head line holds icon, title, badge and age together (centered
+    -- against each other, so the icon stays in line with the title); a
+    -- growing spacer pins the age to the card's right edge. The body
+    -- hangs below, indented past the icon.
+    local headChildren = {}
+    local ok, ipath = pcall(iconPathFor, item, fs(16))
+    if ok and ipath then
+      table.insert(headChildren, ui.image({ path = ipath, width = fs(16), height = fs(16), fit = "contain" }))
+    else
+      -- Unknown sender: generic glyph placeholder instead of no icon.
+      table.insert(headChildren, ui.glyph({ name = "notification", size = fs(16), color = "on_surface_variant" }))
+    end
+    table.insert(headChildren, ui.label({ text = head, fontSize = fs(12), color = "on_surface" }))
     local groupCount = tonumber(item.count) or 1
     if groupCount > 1 then
-      table.insert(headRowChildren, ui.label({
+      table.insert(headChildren, ui.label({
         text = trf("widget.count", groupCount, "(%d)"),
         fontSize = fs(10),
         color = "on_surface_variant",
       }))
     end
-    local headRow = headRowChildren[1]
-    if #headRowChildren > 1 then
-      headRow = ui.row({ gap = fs(5), align = "center" }, headRowChildren)
-    end
-    local lines = { headRow }
-    if showBody and (item.body or "") ~= "" then
-      table.insert(lines, ui.label({
-        text = item.body,
-        fontSize = fs(11),
-        color = "on_surface_variant",
-        maxWidth = fs(280),
-        maxLines = 2,
-      }))
-    end
-    local lineChildren = {}
-    local ok, ipath = pcall(iconPathFor, item, fs(16))
-    if ok and ipath then
-      table.insert(lineChildren, ui.image({ path = ipath, width = fs(16), height = fs(16), fit = "contain" }))
-    else
-      -- Unknown sender: generic glyph placeholder instead of no icon.
-      table.insert(lineChildren, ui.glyph({ name = "notification", size = fs(16), color = "on_surface_variant" }))
-    end
-    -- The text column grows so the age can sit at the card's right edge.
-    table.insert(lineChildren, ui.column({ gap = fs(2), flexGrow = 1 }, lines))
+    table.insert(headChildren, ui.column({ flexGrow = 1 }))
     local age = formatAge(item.receivedAt)
     if age then
-      table.insert(lineChildren, ui.label({ text = age, fontSize = fs(10), color = "on_surface_variant" }))
+      table.insert(headChildren, ui.label({ text = age, fontSize = fs(10), color = "on_surface_variant" }))
     end
+
+    local cardChildren = { ui.row({ gap = fs(5), align = "center" }, headChildren) }
+    if showBody and (item.body or "") ~= "" then
+      table.insert(cardChildren, ui.column({ paddingH = fs(21) }, {
+        ui.label({
+          text = item.body,
+          fontSize = fs(11),
+          color = "on_surface_variant",
+          maxWidth = fs(280),
+          maxLines = 2,
+        }),
+      }))
+    end
+
     -- Each notification is a rounded card over the lock backdrop. The
     -- fill tints with the on-surface color (near-white in dark mode,
     -- near-black in light mode) so the card keeps contrast on any
     -- background, black wallpapers included; a hairline outline marks
     -- the edge.
     table.insert(children, ui.column({
-      gap = fs(4),
+      gap = fs(2),
       paddingH = fs(10),
       paddingV = fs(7),
       radius = fs(8),
       fill = "on_surface/0.08",
       border = "outline_variant/0.12",
       borderWidth = 1,
-    }, {
-      -- card content: top-aligned so the age lines up with the title row
-      ui.row({ gap = fs(6), align = "start" }, lineChildren),
-    }))
+    }, cardChildren))
   end
 
   if count > maxItems then
