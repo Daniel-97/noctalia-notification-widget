@@ -1,0 +1,69 @@
+id = "dan/missed-notifications"
+name = "Missed Notifications"
+version = "0.8.2"
+plugin_api = 51
+author = "dan"
+license = "MIT"
+deprecated = false
+icon = "bell"
+description = "Desktop/Lockscreen widget that lists unread notifications: everything received since the list was last cleared (control center opened or widget clicked)."
+tags = [ "desktop", "system", "utility" ]
+dependencies = [ "dbus-monitor" ]
+
+[[setting]]
+key = "max_items"
+type = "int"
+label_key = "settings.max_items.label"
+description_key = "settings.max_items.description"
+default = 6
+
+[[setting]]
+key = "text_scale"
+type = "select"
+label_key = "settings.text_scale.label"
+description_key = "settings.text_scale.description"
+default = "1.3"
+options = [
+  { value = "1.3", label_key = "settings.text_scale.medium" },
+  { value = "1.0", label_key = "settings.text_scale.small" },
+  { value = "1.6", label_key = "settings.text_scale.large" },
+  { value = "2.0", label_key = "settings.text_scale.huge" },
+]
+
+[[setting]]
+key = "show_body"
+type = "bool"
+label_key = "settings.show_body.label"
+description_key = "settings.show_body.description"
+default = false
+
+[[setting]]
+key = "list_mode"
+type = "select"
+label_key = "settings.list_mode.label"
+description_key = "settings.list_mode.description"
+default = "unread"
+options = [
+  { value = "unread", label_key = "settings.list_mode.unread" },
+  { value = "all", label_key = "settings.list_mode.all" },
+]
+
+[[setting]]
+key = "language"
+type = "select"
+label_key = "settings.language.label"
+description_key = "settings.language.description"
+default = "auto"
+options = [
+  { value = "auto", label_key = "settings.language.auto" },
+  { value = "en", label_key = "settings.language.en" },
+  { value = "it", label_key = "settings.language.it" },
+]
+
+[[service]]
+id = "watcher"
+entry = "service.luau"
+
+[[desktop_widget]]
+id = "widget"
+entry = "widget.luau"

@@ -1,0 +1,50 @@
+{
+  "notify": {
+    "error": "Something went wrong. Check the Noctalia log for details."
+  },
+  "settings": {
+    "max_items": {
+      "label": "Max items shown",
+      "description": "Maximum number of notifications listed on the widget."
+    },
+    "text_scale": {
+      "label": "Text size",
+      "description": "Content size. The plugin cannot read the box size set in the editor, so it renders at fixed sizes picked here.",
+      "small": "Small (100%)",
+      "medium": "Medium (130%)",
+      "large": "Large (160%)",
+      "huge": "Huge (200%)"
+    },
+    "show_body": {
+      "label": "Show body",
+      "description": "Show the notification body under each summary line."
+    },
+    "list_mode": {
+      "label": "List mode",
+      "description": "Unread only: the list empties when the control center is opened. All: a rolling recap of the last notifications, never auto-cleared (click to empty).",
+      "unread": "Unread only",
+      "all": "All (recent)"
+    },
+    "language": {
+      "label": "Language",
+      "description": "Language of the widget texts. Auto follows Noctalia's resolved language (system locale). This page's labels follow the shell language instead.",
+      "auto": "Auto",
+      "en": "English",
+      "it": "Italiano"
+    }
+  },
+  "widget": {
+    "header": "%d unread notifications",
+    "header_one": "1 unread notification",
+    "header_all": "%d recent notifications",
+    "header_all_one": "1 recent notification",
+    "more": "+ %d more",
+    "age_now": "just now",
+    "age_min_one": "1 minute ago",
+    "age_min": "%d minutes ago",
+    "age_hour_one": "1 hour ago",
+    "age_hour": "%d hours ago",
+    "age_day_one": "1 day ago",
+    "age_day": "%d days ago"
+  }
+}
