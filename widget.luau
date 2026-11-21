@@ -380,7 +380,7 @@ local function render()
       paddingV = fs(7),
       radius = fs(8),
       fill = "on_surface/0.08",
-      border = "outline_variant/0.20",
+      border = "outline_variant/0.12",
       borderWidth = 1,
     }, {
       ui.row({ gap = fs(6), align = "center" }, lineChildren),
