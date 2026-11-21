@@ -352,7 +352,13 @@ local function render()
     end
     local lines = { headRow }
     if showBody and (item.body or "") ~= "" then
-      table.insert(lines, ui.label({ text = truncate(item.body, 96), fontSize = fs(11), color = "on_surface_variant" }))
+      table.insert(lines, ui.label({
+        text = item.body,
+        fontSize = fs(11),
+        color = "on_surface_variant",
+        maxWidth = fs(280),
+        lines = 2,
+      }))
     end
     local lineChildren = {}
     local ok, ipath = pcall(iconPathFor, item, fs(16))

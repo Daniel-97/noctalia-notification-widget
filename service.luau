@@ -131,16 +131,22 @@ local function onNotification(app, icon, summary, body)
   if summary == "" and body == "" then
     return nil
   end
-  local last = items[#items]
-  if last and last.app == app and last.summary == summary then
-    -- Same app and summary as the last entry: group into it (chat apps
-    -- resending) — keep the latest body and count the occurrences.
-    last.body = body
-    last.icon = icon
-    last.receivedAt = os.time()
-    last.count = (last.count or 1) + 1
-    publish()
-    return last
+  -- Group with a previous entry with the same app and summary, wherever
+  -- it sits in the list (a different notification in between must not
+  -- split the group). The grouped entry keeps the latest body, counts
+  -- the occurrences, and is renewed at the end of the list.
+  for i = #items, 1, -1 do
+    local item = items[i]
+    if item.app == app and item.summary == summary then
+      table.remove(items, i)
+      item.body = body
+      item.icon = icon
+      item.receivedAt = os.time()
+      item.count = (item.count or 1) + 1
+      table.insert(items, item)
+      publish()
+      return item
+    end
   end
   local item = {
     app = app,
@@ -225,6 +231,33 @@ local function startNotifyWatch()
 end
 
 -- ------------------------------------------------------------------
+-- Watchdog: if the dbus-monitor process dies silently, respawn it.
+-- Checked from update() at most once every 30 s. The pgrep pattern uses
+-- a character class ("Notif[y]") so the checking shell itself — whose
+-- command line contains the pattern literal — never matches.
+-- ------------------------------------------------------------------
+local lastWatchdogCheck = 0
+
+local function watchdogCheck()
+  local now = os.time()
+  if now - lastWatchdogCheck < 30 then
+    return
+  end
+  lastWatchdogCheck = now
+  if not noctalia.commandExists("pgrep") then
+    return
+  end
+  noctalia.runAsync(
+    'pgrep -f "dbus-monitor.*Notif[y]" > /dev/null 2>&1',
+    function(result)
+      if result.exitCode ~= 0 then
+        log("notification watcher not running: respawning dbus-monitor")
+        startNotifyWatch()
+      end
+    end)
+end
+
+-- ------------------------------------------------------------------
 -- "Viewed" detection: the control center opening is the closest
 -- externally observable event to Noctalia's own "notifications tab
 -- opened" read marker. The tab itself is not distinguishable over IPC.
@@ -259,6 +292,7 @@ end)
 function update()
   noctalia.setUpdateInterval(2000)
   centerOpenPoll()
+  watchdogCheck()
 end
 
 restoreStore()

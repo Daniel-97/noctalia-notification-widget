@@ -1,6 +1,6 @@
 id = "daniel-97/missed-notifications"
 name = "Lockscreen Notification Widget"
-version = "1.1.1"
+version = "1.2.0"
 plugin_api = 51
 author = "daniel-97"
 license = "MIT"
@@ -8,7 +8,7 @@ deprecated = false
 icon = "bell"
 description = "Lockscreen/desktop widget that lists unread notifications, with app icons and relative ages."
 tags = [ "desktop", "system", "utility" ]
-dependencies = [ "dbus-monitor" ]
+dependencies = [ "dbus-monitor", "pgrep" ]
 
 [[setting]]
 key = "max_items"

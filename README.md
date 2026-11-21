@@ -13,7 +13,7 @@ cleared, with app icons and relative ages.
 
 ## Requirements
 
-Install `dbus-monitor` (dbus tools) on `PATH`.
+Install `dbus-monitor` (dbus tools) and `pgrep` (procps) on `PATH`.
 
 ## Usage
 
@@ -53,9 +53,10 @@ widget.
 
 - Notifications are captured by eavesdropping
   `org.freedesktop.Notifications.Notify` calls with a spawned
-  `dbus-monitor` process. Noctalia v5 keeps its own history encrypted with
-  no public unread API, so this is an approximation: "received since the
-  list was last cleared", not the shell's exact unread model.
+  `dbus-monitor` process, respawned automatically if it dies (checked
+  with `pgrep` every 30 s). Noctalia v5 keeps its own history encrypted
+  with no public unread API, so this is an approximation: "received since
+  the list was last cleared", not the shell's exact unread model.
 - The list is persisted to `items.json` in the plugin data dir
   (`$XDG_STATE_HOME/noctalia/plugins/data/<id>/`) and survives reloads and
   restarts.
@@ -63,12 +64,11 @@ widget.
   hint, then the notification's `app_icon`, then the app name); unknown
   senders get a generic glyph.
 - Consecutive notifications with the same app and summary are grouped
-  into one entry with an occurrence count (`(x2)`, `(x3)`...) and the
-  latest body; a different notification in between closes the group.
+  into one entry with an occurrence count (`(2)`, `(3)`...) and the
+  latest body, wherever the older entry sits in the list; a grouped
+  entry is renewed at the newest position.
 - Leave the widget box auto-fit (`box_width`/`box_height` `0.0`): a fixed
   box set from the editor makes the host rescale the content, so text size
   varies with the amount of content.
 - No replaces-id correlation: notifications withdrawn by the sending app
   (read in the app itself) are not removed from the list.
-- If `dbus-monitor` dies silently the stream is not restarted
-  automatically.
