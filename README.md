@@ -71,5 +71,9 @@ widget.
 - Leave the widget box auto-fit (`box_width`/`box_height` `0.0`): a fixed
   box set from the editor makes the host rescale the content, so text size
   varies with the amount of content.
-- No replaces-id correlation: notifications withdrawn by the sending app
-  (read in the app itself) are not removed from the list.
+- Notifications withdrawn by their sending app (read in the app itself,
+  like chat apps marking as read) leave the list: the daemon-assigned ids
+  are correlated through captured method returns, and `NotificationClosed`
+  signals with reason 3 remove the matching entry. A grouped entry loses
+  one occurrence instead. Expired or user-dismissed toasts stay, matching
+  Noctalia's own unread model.
