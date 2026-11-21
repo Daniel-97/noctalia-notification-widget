@@ -113,7 +113,11 @@ end
 -- ------------------------------------------------------------------
 -- Three kinds of captured messages matter:
 --   * Notify method calls — app name, icon, summary, body, the call
---     serial, and the desktop-entry hint after the body:
+--     serial, and the hints that follow the body (desktop-entry,
+--     urgency, transient). The entry is only committed at the
+--     message's last line (its expire timeout), when every field is
+--     known — transient notifications are skipped there, honoring the
+--     app's own "do not persist me" declaration:
 --       method call ... serial=9 ...; member=Notify
 --          string "app_name"  (first four string lines)
 --   * the daemon's method returns — the assigned notification id,
@@ -135,7 +139,9 @@ local msgKind = nil -- "notify" | "return" | "closed"
 local nStrings = {}
 local closedValues = {}
 local hintKey = nil
-local current = nil
+local hintDesktop = nil
+local hintUrgent = false
+local hintTransient = false
 local pendingSerial = nil
 local pendingSender = nil
 local pendingReplyKey = nil
@@ -232,11 +238,41 @@ local function onNotification(app, icon, summary, body)
   return item
 end
 
+-- The Notify message ends with its expire timeout (int32), after every
+-- hint is known: the entry is committed once there — atomic, with the
+-- desktop-entry, urgency and transient declarations already collected.
+local function flushNotify()
+  if msgKind ~= "notify" or #nStrings < 4 then
+    return
+  end
+  msgKind = nil
+  if hintTransient then
+    log("transient notification skipped (" .. tostring(nStrings[3]) .. ")")
+    return
+  end
+  local item = onNotification(nStrings[1] or "", nStrings[2] or "", nStrings[3] or "", nStrings[4] or "")
+  if item then
+    if hintDesktop then
+      item.desktop = hintDesktop
+    end
+    item.urgent = hintUrgent
+    if pendingSerial then
+      rememberSerial(pendingSerial, item)
+    end
+  end
+end
+
 local function resetMsg()
+  -- A new message started: commit a fully-collected notification first
+  -- (its int32 timeout should already have done it; this is a guard).
+  flushNotify()
   msgKind = nil
   nStrings = {}
   closedValues = {}
   hintKey = nil
+  hintDesktop = nil
+  hintUrgent = false
+  hintTransient = false
 end
 
 -- Known hint keys we care about, in the hints dict after the body.
@@ -246,6 +282,9 @@ local function hintKeyFor(line)
   end
   if line:find('^%s*string%s+"urgency"%s*$') then
     return "urgency"
+  end
+  if line:find('^%s*string%s+"transient"%s*$') then
+    return "transient"
   end
   return nil
 end
@@ -257,7 +296,6 @@ local function handleNotifyLine(line)
     msgKind = "notify"
     pendingSerial = tonumber(line:match("serial=(%d+)"))
     pendingSender = line:match("sender=([^ ]+)") or ""
-    current = nil
     return
   end
   if line:find("member=NotificationClosed", 1, true) then
@@ -320,26 +358,35 @@ local function handleNotifyLine(line)
 
   -- Inside the hints dict: a known key is followed by its variant value.
   -- Keys can arrive in any order, so a new dict key re-runs the lookup.
+  -- Values are only collected here; the entry is committed at the end
+  -- of the message, with everything known.
   if hintKey ~= nil then
-    local v
     if hintKey == "urgency" then
-      v = line:match("^%s*variant%s+byte%s+(%d+)%s*$")
-    else
-      v = line:match('^%s*variant%s+string%s+"(.*)"%s*$')
-    end
-    if v then
-      local key = hintKey
-      hintKey = nil
-      if current then
-        if key == "urgency" then
-          -- Urgency byte: 0 low, 1 normal, 2 critical.
-          current.urgent = tonumber(v) == 2
-        else
-          current.desktop = unescapeDbus(v)
-        end
-        publish()
+      local v = line:match("^%s*variant%s+byte%s+(%d+)%s*$")
+      if v then
+        -- Urgency byte: 0 low, 1 normal, 2 critical.
+        hintUrgent = tonumber(v) == 2
+        hintKey = nil
       end
-    elseif line:match('^%s*string%s+"') then
+    elseif hintKey == "transient" then
+      -- The spec has transient as a boolean, but some toolkits send a
+      -- bare 1 instead — accept both.
+      local v = line:match("^%s*variant%s+boolean%s+true%s*$")
+        or line:match("^%s*variant%s+byte%s+1%s*$")
+        or line:match("^%s*variant%s+int32%s+1%s*$")
+        or line:match("^%s*variant%s+uint32%s+1%s*$")
+      if v then
+        hintTransient = true
+        hintKey = nil
+      end
+    else
+      local v = line:match('^%s*variant%s+string%s+"(.*)"%s*$')
+      if v then
+        hintDesktop = unescapeDbus(v)
+        hintKey = nil
+      end
+    end
+    if hintKey ~= nil and line:match('^%s*string%s+"') then
       hintKey = hintKeyFor(line) -- a different dict key: not our value
     end
     return
@@ -350,14 +397,14 @@ local function handleNotifyLine(line)
     local s = line:match('^%s*string%s+"(.*)"%s*$')
     if s then
       table.insert(nStrings, unescapeDbus(s))
-      if #nStrings == 4 then
-        current = onNotification(nStrings[1] or "", nStrings[2] or "", nStrings[3] or "", nStrings[4] or "")
-        if current and pendingSerial then
-          rememberSerial(pendingSerial, current)
-        end
-      end
       return
     end
+  end
+  -- The expire timeout is the message's last argument: the entry is
+  -- committed there, once every hint is known.
+  if msgKind == "notify" and line:match("^%s*int32%s+%-?%d+%s*$") then
+    flushNotify()
+    return
   end
   -- Hints come after the body: look for known dict keys.
   hintKey = hintKeyFor(line)

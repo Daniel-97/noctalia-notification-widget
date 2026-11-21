@@ -83,3 +83,6 @@ widget.
   returns `NotFound` and no signal follows), so a message read in the app
   after its toast expired keeps its entry until the list is cleared. This
   is a property of the D-Bus notification lifecycle, not of the plugin.
+- Transient notifications (marked so by their own app — media-player
+  track changes, OSDs) are not captured: the app itself declared them
+  ephemeral, so they never enter the list.
