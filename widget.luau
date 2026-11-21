@@ -321,7 +321,9 @@ local function render()
 
   for _, item in ipairs(visible) do
     local appName = displayName(item, resolveLang())
-    local summary = truncate(item.summary, 64)
+    -- Aggressive truncation: 40 keeps the head line from stretching the
+    -- card well past the body's measure.
+    local summary = truncate(item.summary, 40)
     -- Head parts: the app name renders bold, the summary stays regular.
     local headParts = {}
     if appName and appName ~= "" and summary ~= "" then
@@ -330,7 +332,7 @@ local function render()
     elseif summary ~= "" then
       table.insert(headParts, ui.label({ text = summary, fontSize = fs(12), color = "on_surface" }))
     elseif (item.body or "") ~= "" then
-      table.insert(headParts, ui.label({ text = truncate(item.body, 64), fontSize = fs(12), color = "on_surface" }))
+      table.insert(headParts, ui.label({ text = truncate(item.body, 40), fontSize = fs(12), color = "on_surface" }))
     else
       table.insert(headParts, ui.label({ text = "?", fontSize = fs(12), color = "on_surface" }))
     end
