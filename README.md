@@ -49,6 +49,9 @@ widget.
 | `list_mode` | select | "unread" | Unread only (clears when the control center opens) or all (rolling recap, click to empty) |
 | `language` | select | "auto" | Widget texts language: auto (system locale), English, Italiano |
 | `order` | select | "newest" | Newest notifications at the top, or arrival order |
+| `age_format` | select | "relative" | Age as relative ("2 hours ago"), absolute ("18:42"), or both joined by a middle dot |
+| `max_age_hours` | int | 24 | Entries older than this many hours leave the list on their own; 0 keeps them forever |
+| `hide_when_empty` | bool | false | Hide the widget entirely instead of showing the empty state |
 
 ## Notes
 

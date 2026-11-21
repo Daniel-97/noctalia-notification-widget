@@ -168,7 +168,7 @@ local function iconPathFor(item, size)
 end
 
 -- Relative age text for an entry ("just now", "1 minute ago", "2 hours ago"...).
-local function formatAge(t)
+local function formatAgeRelative(t)
   if type(t) ~= "number" or t <= 0 then
     return nil
   end
@@ -200,6 +200,28 @@ local function formatAge(t)
     return trs("widget.age_day_one", "1 day ago")
   end
   return trf("widget.age_day", days, "%d days ago")
+end
+
+-- Age text per the age_format setting: relative ("2 hours ago"),
+-- absolute ("18:42"), or both joined by a middle dot. os.date may be
+-- unavailable in the plugin sandbox: fall back to the relative text
+-- rather than breaking the render.
+local function formatAge(t)
+  if type(t) ~= "number" or t <= 0 then
+    return nil
+  end
+  local mode = tostring(cfg("age_format", "relative"))
+  if mode == "relative" then
+    return formatAgeRelative(t)
+  end
+  local ok, abs = pcall(os.date, "%H:%M", t)
+  if not ok or type(abs) ~= "string" then
+    return formatAgeRelative(t)
+  end
+  if mode == "absolute" then
+    return abs
+  end
+  return (formatAgeRelative(t) or "") .. " · " .. abs
 end
 
 -- ------------------------------------------------------------------
@@ -269,6 +291,12 @@ local function render()
   refreshScale()
   local items = type(state.items) == "table" and state.items or {}
   if #items == 0 then
+    -- Optional: hide the widget entirely instead of showing the empty
+    -- state, for a clean lock backdrop.
+    if cfg("hide_when_empty", false) == true then
+      desktopWidget.setVisible(false)
+      return
+    end
     -- Empty state: keep the widget visible (dimmed) so its presence is
     -- clear even with nothing to show.
     desktopWidget.setVisible(true)

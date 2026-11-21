@@ -109,6 +109,34 @@ local function clearList(reason)
 end
 
 -- ------------------------------------------------------------------
+-- Age-based pruning: entries older than the configured hours leave the
+-- list on their own (0 keeps them forever). Runs on every service tick,
+-- which is cheap — the list is capped at MAX_STORED anyway.
+-- ------------------------------------------------------------------
+local function pruneOldEntries()
+  local hours = tonumber(cfg("max_age_hours", 24)) or 0
+  if hours <= 0 then
+    return
+  end
+  local cutoff = os.time() - hours * 3600
+  local kept = {}
+  local removed = 0
+  for _, item in ipairs(items) do
+    local t = tonumber(item.receivedAt)
+    if type(t) == "number" and t < cutoff then
+      removed = removed + 1
+    else
+      table.insert(kept, item)
+    end
+  end
+  if removed > 0 then
+    items = kept
+    log("pruned " .. removed .. " expired notification(s)")
+    publish()
+  end
+end
+
+-- ------------------------------------------------------------------
 -- Notification eavesdropping (dbus-monitor)
 -- ------------------------------------------------------------------
 -- Three kinds of captured messages matter:
@@ -485,10 +513,12 @@ end)
 
 function update()
   noctalia.setUpdateInterval(2000)
+  pruneOldEntries()
   centerOpenPoll()
   watchdogCheck()
 end
 
 restoreStore()
+pruneOldEntries()
 publish()
 startNotifyWatch()

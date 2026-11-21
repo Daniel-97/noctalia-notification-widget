@@ -37,6 +37,21 @@
       "description": "Newest notifications at the top, or keep arrival order (oldest first).",
       "newest": "Newest first",
       "oldest": "Oldest first"
+    },
+    "age_format": {
+      "label": "Age format",
+      "description": "How each entry's age is shown.",
+      "relative": "Relative (2 hours ago)",
+      "absolute": "Absolute (18:42)",
+      "both": "Both (2 hours ago · 18:42)"
+    },
+    "max_age": {
+      "label": "Maximum age (hours)",
+      "description": "Entries older than this many hours leave the list on their own. 0 keeps them forever."
+    },
+    "hide_empty": {
+      "label": "Hide when empty",
+      "description": "Hide the widget entirely instead of showing the empty state."
     }
   },
   "widget": {

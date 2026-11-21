@@ -71,6 +71,32 @@ options = [
   { value = "oldest", label_key = "settings.order.oldest" },
 ]
 
+[[setting]]
+key = "age_format"
+type = "select"
+label_key = "settings.age_format.label"
+description_key = "settings.age_format.description"
+default = "relative"
+options = [
+  { value = "relative", label_key = "settings.age_format.relative" },
+  { value = "absolute", label_key = "settings.age_format.absolute" },
+  { value = "both", label_key = "settings.age_format.both" },
+]
+
+[[setting]]
+key = "max_age_hours"
+type = "int"
+label_key = "settings.max_age.label"
+description_key = "settings.max_age.description"
+default = 24
+
+[[setting]]
+key = "hide_when_empty"
+type = "bool"
+label_key = "settings.hide_empty.label"
+description_key = "settings.hide_empty.description"
+default = false
+
 [[service]]
 id = "watcher"
 entry = "service.luau"
