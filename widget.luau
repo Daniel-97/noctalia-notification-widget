@@ -324,11 +324,14 @@ local function render()
     -- Truncation at 60 keeps the head line within a sane bound while
     -- letting real titles breathe.
     local summary = truncate(item.summary, 60)
-    -- Head parts: the app name renders bold, the summary stays regular.
+    -- Head parts: the app name renders bold, the summary stays regular,
+    -- and the separator dot stands on its own label so the row gap
+    -- spaces it evenly from both sides.
     local headParts = {}
     if appName and appName ~= "" and summary ~= "" then
       table.insert(headParts, ui.label({ text = appName, fontSize = fs(12), fontWeight = "bold", color = "on_surface" }))
-      table.insert(headParts, ui.label({ text = " · " .. summary, fontSize = fs(12), color = "on_surface" }))
+      table.insert(headParts, ui.label({ text = " · ", fontSize = fs(12), color = "on_surface" }))
+      table.insert(headParts, ui.label({ text = summary, fontSize = fs(12), color = "on_surface" }))
     elseif summary ~= "" then
       table.insert(headParts, ui.label({ text = summary, fontSize = fs(12), color = "on_surface" }))
     elseif (item.body or "") ~= "" then
