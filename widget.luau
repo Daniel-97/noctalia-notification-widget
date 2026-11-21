@@ -369,13 +369,19 @@ local function render()
       table.insert(lineChildren, ui.glyph({ name = "notification", size = fs(16), color = "on_surface_variant" }))
     end
     table.insert(lineChildren, ui.column({ gap = fs(2) }, lines))
-    -- Each notification is a rounded card over the lock backdrop.
+    -- Each notification is a rounded card over the lock backdrop. The
+    -- fill tints with the on-surface color (near-white in dark mode,
+    -- near-black in light mode) so the card keeps contrast on any
+    -- background, black wallpapers included; a hairline outline marks
+    -- the edge.
     table.insert(children, ui.column({
       gap = fs(4),
       paddingH = fs(10),
       paddingV = fs(7),
       radius = fs(8),
-      fill = "surface_container/0.25",
+      fill = "on_surface/0.08",
+      border = "outline_variant/0.40",
+      borderWidth = 1,
     }, {
       ui.row({ gap = fs(6), align = "center" }, lineChildren),
     }))
