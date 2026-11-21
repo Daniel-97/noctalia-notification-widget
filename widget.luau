@@ -342,10 +342,6 @@ local function render()
         color = "on_surface_variant",
       }))
     end
-    local age = formatAge(item.receivedAt)
-    if age then
-      table.insert(headRowChildren, ui.label({ text = age, fontSize = fs(10), color = "on_surface_variant" }))
-    end
     local headRow = headRowChildren[1]
     if #headRowChildren > 1 then
       headRow = ui.row({ gap = fs(5), align = "center" }, headRowChildren)
@@ -368,7 +364,12 @@ local function render()
       -- Unknown sender: generic glyph placeholder instead of no icon.
       table.insert(lineChildren, ui.glyph({ name = "notification", size = fs(16), color = "on_surface_variant" }))
     end
-    table.insert(lineChildren, ui.column({ gap = fs(2) }, lines))
+    -- The text column grows so the age can sit at the card's right edge.
+    table.insert(lineChildren, ui.column({ gap = fs(2), flexGrow = 1 }, lines))
+    local age = formatAge(item.receivedAt)
+    if age then
+      table.insert(lineChildren, ui.label({ text = age, fontSize = fs(10), color = "on_surface_variant" }))
+    end
     -- Each notification is a rounded card over the lock backdrop. The
     -- fill tints with the on-surface color (near-white in dark mode,
     -- near-black in light mode) so the card keeps contrast on any
