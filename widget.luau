@@ -399,7 +399,7 @@ local function render()
     table.insert(children, ui.column({
       gap = fs(2),
       paddingH = fs(10),
-      paddingV = hasBody and fs(7) or fs(10),
+      paddingV = hasBody and fs(7) or fs(13),
       radius = fs(8),
       fill = "on_surface/0.08",
       border = "outline_variant/0.12",
