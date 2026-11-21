@@ -2,7 +2,8 @@
 
 A Noctalia v5 plugin that lists unread notifications on the lock screen
 (and optionally the desktop): everything received since the list was last
-cleared, with app icons and relative ages.
+cleared, with app icons and relative ages. Each notification renders as a
+rounded card over the lock backdrop.
 
 ## Plugin
 

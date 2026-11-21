@@ -357,7 +357,7 @@ local function render()
         fontSize = fs(11),
         color = "on_surface_variant",
         maxWidth = fs(280),
-        lines = 2,
+        maxLines = 2,
       }))
     end
     local lineChildren = {}
@@ -368,8 +368,17 @@ local function render()
       -- Unknown sender: generic glyph placeholder instead of no icon.
       table.insert(lineChildren, ui.glyph({ name = "notification", size = fs(16), color = "on_surface_variant" }))
     end
-    table.insert(lineChildren, ui.column({ gap = 2 }, lines))
-    table.insert(children, ui.row({ gap = fs(6), align = "center" }, lineChildren))
+    table.insert(lineChildren, ui.column({ gap = fs(2) }, lines))
+    -- Each notification is a rounded card over the lock backdrop.
+    table.insert(children, ui.column({
+      gap = fs(4),
+      paddingH = fs(10),
+      paddingV = fs(7),
+      radius = fs(8),
+      fill = "surface_container/0.25",
+    }, {
+      ui.row({ gap = fs(6), align = "center" }, lineChildren),
+    }))
   end
 
   if count > maxItems then
@@ -381,7 +390,7 @@ local function render()
   end
 
   desktopWidget.setVisible(true)
-  desktopWidget.render(ui.column({ gap = fs(5) }, children))
+  desktopWidget.render(ui.column({ gap = fs(8) }, children))
 end
 
 pcall(function()
