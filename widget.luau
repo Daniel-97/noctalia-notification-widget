@@ -202,6 +202,69 @@ local function formatAge(t)
   return trf("widget.age_day", days, "%d days ago")
 end
 
+-- ------------------------------------------------------------------
+-- App display name: real apps often leave the notification's app_name
+-- empty and only send the desktop-entry hint. Resolve the pretty name
+-- from the .desktop file (localized per the widget language), falling
+-- back to app_name and finally to the cleaned desktop id.
+-- ------------------------------------------------------------------
+local nameCache = {}
+
+local function desktopFileCandidates(desktop)
+  return {
+    "/usr/share/applications/" .. desktop .. ".desktop",
+    "/usr/local/share/applications/" .. desktop .. ".desktop",
+  }
+end
+
+local function cleanDesktopId(desktop)
+  -- "org.gnome.Nautilus" -> "Nautilus"
+  return desktop:match("[^%.]+$") or desktop
+end
+
+local function displayName(item, lang)
+  local desktop = item.desktop
+  if type(desktop) == "string" and desktop ~= "" then
+    local cacheKey = desktop .. ":" .. lang
+    if nameCache[cacheKey] ~= nil then
+      return nameCache[cacheKey]
+    end
+    local name = nil
+    for _, path in ipairs(desktopFileCandidates(desktop)) do
+      local ok, raw = pcall(function() return noctalia.readFile(path) end)
+      if ok and type(raw) == "string" and raw ~= "" then
+        local nameGeneric = nil
+        local nameLocalized = nil
+        for line in raw:gmatch("([^\r\n]+)") do
+          -- Only the main [Desktop Entry] section: stop at the first
+          -- section header (Desktop Actions carry their own Name=).
+          if line:match("^%[") then
+            break
+          end
+          if not nameGeneric and line:match("^Name=") then
+            nameGeneric = line:match("^Name=(.*)$")
+          end
+          if not nameLocalized and line:match("^Name%[" .. lang .. "%]=") then
+            nameLocalized = line:match("^Name%[" .. lang .. "%]=(.*)$")
+          end
+        end
+        name = nameLocalized or nameGeneric
+        break
+      end
+    end
+    if name == nil then
+      name = cleanDesktopId(desktop)
+    end
+    nameCache[cacheKey] = name
+    return name
+  end
+  local app = tostring(item.app or "")
+  if app ~= "" then
+    return app
+  end
+  return nil
+end
+
 local function render()
   refreshScale()
   local items = type(state.items) == "table" and state.items or {}
@@ -251,11 +314,11 @@ local function render()
   end
 
   for _, item in ipairs(visible) do
-    local app = tostring(item.app or "")
+    local appName = displayName(item, resolveLang())
     local summary = truncate(item.summary, 64)
     local head
-    if app ~= "" and summary ~= "" then
-      head = app .. " · " .. summary
+    if appName and appName ~= "" and summary ~= "" then
+      head = appName .. " · " .. summary
     elseif summary ~= "" then
       head = summary
     else
