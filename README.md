@@ -1,78 +1,73 @@
 # Lockscreen Notification Widget
 
-Noctalia v5 plugin (Luau). Lockscreen/desktop widget that lists **unread
-notifications**: everything received since the list was last cleared.
+A Noctalia v5 plugin that lists unread notifications on the lock screen
+(and optionally the desktop): everything received since the list was last
+cleared, with app icons and relative ages.
 
-## How it works
+## Plugin
 
-- `service.luau` (`[[service]]`, headless) eavesdrops every
-  `org.freedesktop.Notifications.Notify` call with `dbus-monitor`: app name,
-  summary and body are captured no matter the session state (locked or not).
-- Consecutive notifications with the same app and summary update the last
-  entry instead of piling up (chat apps resending).
-- The list is **persisted** in the plugin data dir (`items.json`): it
-  survives service restarts — plugin hot-reloads, settings changes (the
-  service is restarted when a plugin setting is edited) — and shell
-  restarts.
-- The list is cleared when:
-  - the **control center is opened** — in the "unread" list mode only; the
-    closest externally observable event to Noctalia's own "notifications tab
-    opened" read marker (poll via `noctalia msg status` every 2 s; the tab
-    itself is not distinguishable over IPC). The "all" list mode never
-    auto-clears.
-  - the **widget is clicked** (control channel).
-- `widget.luau` (`[[desktop_widget]]`) renders the list: a bell header with
-  the count, then one line per notification with its **relative age**
-  ("3 minuti fa", "2 ore fa"...) next to the summary, refreshed on every
-  render (~5 s). With an empty list the widget stays visible in a dimmed
-  empty state instead of hiding.
-
-## Settings
-
-| Setting                | Type   | Default  | Description                                        |
-| ---------------------- | ------ | -------- | -------------------------------------------------- |
-| `max_items`            | int    | 6        | Max notifications listed (stored cap is 30)        |
-| `text_scale`           | select | "1.3"    | Content size (100%–200%)                           |
-| `show_body`            | bool   | false    | Show the body under each summary line              |
-| `list_mode`            | select | "unread" | Unread only (clears when the control center opens) or All (rolling recap, click to empty) |
-| `language`             | select | "auto"   | Widget texts language: auto (system locale), English, Italiano |
-| `order`                | select | "newest" | Newest notifications at the top, or arrival order (oldest first) |
+| Field | Value |
+| --- | --- |
+| ID | `daniel-97/missed-notifications` |
+| Entries | Service: `watcher`; desktop widget: `widget` |
 
 ## Requirements
 
-`dbus-monitor` (dbus tools) on `PATH`.
+Install `dbus-monitor` (dbus tools) on `PATH`.
 
-## Install (local dev source)
+## Usage
 
+Run as a local source while developing:
+
+```sh
+noctalia msg plugins source add missed-dev path <this repo's parent>
+noctalia msg plugins enable daniel-97/missed-notifications
 ```
-noctalia msg plugins source add missed-dev path ~/Projects/daniel-97/noctalia-plugins-dev
-noctalia msg plugins enable dan/missed-notifications
-```
 
-Then add the widget from the lockscreen (or desktop) widget editor.
+Then add the widget from the lockscreen widget editor
+(`noctalia msg lockscreen-widgets-edit`) — or the desktop editor
+(`noctalia msg desktop-widgets-edit`) — by picking **Lockscreen
+Notification Widget** in the add-widget list and placing it like any other
+widget.
 
-## Known limitations (v0.2)
+- While locked, the list shows notifications received and not yet
+  acknowledged.
+- In unread mode the list empties when the control center is opened (the
+  closest observable event to Noctalia's own read marker) or when the
+  widget is clicked.
+- In all mode the list is a rolling recap of the last 30 notifications and
+  only empties on click.
 
-- Noctalia v5 keeps its notification history encrypted with no public
-  unread API, so this is an eavesdrop-based approximation: "received since
-  the list was last cleared", not the shell's exact unread model.
-- The read marker is the control center opening, not the notifications tab
-  specifically (the tab is not distinguishable over IPC).
+## Settings
+
+| Setting | Type | Default | Description |
+| --- | --- | --- | --- |
+| `max_items` | int | 6 | Max notifications listed (stored cap is 30) |
+| `text_scale` | select | "1.3" | Content size: 100%–200% |
+| `show_body` | bool | false | Show the body under each summary line |
+| `list_mode` | select | "unread" | Unread only (clears when the control center opens) or all (rolling recap, click to empty) |
+| `language` | select | "auto" | Widget texts language: auto (system locale), English, Italiano |
+| `order` | select | "newest" | Newest notifications at the top, or arrival order |
+
+## Notes
+
+- Notifications are captured by eavesdropping
+  `org.freedesktop.Notifications.Notify` calls with a spawned
+  `dbus-monitor` process. Noctalia v5 keeps its own history encrypted with
+  no public unread API, so this is an approximation: "received since the
+  list was last cleared", not the shell's exact unread model.
+- The list is persisted to `items.json` in the plugin data dir
+  (`$XDG_STATE_HOME/noctalia/plugins/data/<id>/`) and survives reloads and
+  restarts.
+- App icons are resolved through `noctalia.appIconPath` (desktop-entry
+  hint, then the notification's `app_icon`, then the app name); unknown
+  senders get a generic glyph.
+- Consecutive notifications with the same app and summary update the last
+  entry instead of piling up (chat apps resending).
+- Leave the widget box auto-fit (`box_width`/`box_height` `0.0`): a fixed
+  box set from the editor makes the host rescale the content, so text size
+  varies with the amount of content.
 - No replaces-id correlation: notifications withdrawn by the sending app
   (read in the app itself) are not removed from the list.
-- If `dbus-monitor` dies silently the stream is not restarted automatically.
-
-## Layout note: keep the box auto-fit
-
-Leave the widget's `box_width` and `box_height` at `0.0` (auto-fit). A fixed
-box set from the editor makes Noctalia **rescale the content to fill it**, so
-the text size changes with the amount of content (few notifications = bigger
-text, many = smaller). With auto-fit the box follows the content and text
-stays at the configured size; only the footprint changes.
-
-## Test
-
-```
-notify-send "Test" "unread entry"   # appears in the widget
-noctalia msg panel-open control-center   # clears the list within ~2 s
-```
+- If `dbus-monitor` dies silently the stream is not restarted
+  automatically.

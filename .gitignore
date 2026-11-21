@@ -1,0 +1,4 @@
+# Community standard: only en.json is shipped. Locale files come from
+# Noctalia Translate (https://i18n.noctalia.dev); keep local copies out
+# of the repository.
+translations/it.json

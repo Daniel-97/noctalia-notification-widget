@@ -274,7 +274,7 @@ local function render()
     desktopWidget.setVisible(true)
     desktopWidget.render(ui.row({ gap = fs(6), align = "center" }, {
       ui.glyph({ name = "bell", size = fs(15), color = "on_surface_variant" }),
-      ui.label({ text = trs("widget.empty", "Nessuna notifica"), fontSize = fs(14), color = "on_surface_variant" }),
+      ui.label({ text = trs("widget.empty", "No notifications"), fontSize = fs(14), color = "on_surface_variant" }),
     }))
     return
   end
