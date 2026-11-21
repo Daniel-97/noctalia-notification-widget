@@ -340,12 +340,20 @@ local function render()
     -- hangs below, indented past the icon.
     local headChildren = {}
     local ok, ipath = pcall(iconPathFor, item, fs(16))
+    -- Optical alignment: a centered text label's glyph center sits a
+    -- touch lower than its box center, so a box-centered icon rides
+    -- slightly high; a hairline spacer on top nudges it down to match.
+    local iconElement
     if ok and ipath then
-      table.insert(headChildren, ui.image({ path = ipath, width = fs(16), height = fs(16), fit = "contain" }))
+      iconElement = ui.image({ path = ipath, width = fs(16), height = fs(16), fit = "contain" })
     else
       -- Unknown sender: generic glyph placeholder instead of no icon.
-      table.insert(headChildren, ui.glyph({ name = "notification", size = fs(16), color = "on_surface_variant" }))
+      iconElement = ui.glyph({ name = "notification", size = fs(16), color = "on_surface_variant" })
     end
+    table.insert(headChildren, ui.column({ gap = 0 }, {
+      ui.spacer({ height = fs(3) }),
+      iconElement,
+    }))
     for _, part in ipairs(headParts) do
       table.insert(headChildren, part)
     end
