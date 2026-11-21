@@ -1,6 +1,6 @@
-# Missed Notifications
+# Lockscreen Notification Widget
 
-Noctalia v5 plugin (Luau). Desktop/lockscreen widget that lists **unread
+Noctalia v5 plugin (Luau). Lockscreen/desktop widget that lists **unread
 notifications**: everything received since the list was last cleared.
 
 ## How it works
