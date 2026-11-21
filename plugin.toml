@@ -1,6 +1,6 @@
 id = "daniel-97/missed-notifications"
 name = "Lockscreen Notification Widget"
-version = "1.1.0"
+version = "1.1.1"
 plugin_api = 51
 author = "daniel-97"
 license = "MIT"

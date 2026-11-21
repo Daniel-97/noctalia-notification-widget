@@ -337,7 +337,7 @@ local function render()
     local groupCount = tonumber(item.count) or 1
     if groupCount > 1 then
       table.insert(headRowChildren, ui.label({
-        text = trf("widget.count", groupCount, "(x%d)"),
+        text = trf("widget.count", groupCount, "(%d)"),
         fontSize = fs(10),
         color = "on_surface_variant",
       }))
