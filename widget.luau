@@ -384,7 +384,8 @@ local function render()
       border = "outline_variant/0.12",
       borderWidth = 1,
     }, {
-      ui.row({ gap = fs(6), align = "center" }, lineChildren),
+      -- card content: top-aligned so the age lines up with the title row
+      ui.row({ gap = fs(6), align = "start" }, lineChildren),
     }))
   end
 
