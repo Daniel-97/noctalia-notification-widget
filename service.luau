@@ -258,7 +258,6 @@ function update()
   centerOpenPoll()
 end
 
-publish()
 restoreStore()
 publish()
 startNotifyWatch()
