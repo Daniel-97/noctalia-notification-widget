@@ -283,6 +283,10 @@ local function handleNotifyLine(line)
       if item then
         item.daemonIds = item.daemonIds or {}
         table.insert(item.daemonIds, tonumber(v))
+        -- The store must reflect the assigned id right away: nothing
+        -- else may publish for a long time, and the ids would only live
+        -- in memory until then.
+        saveStore()
       end
     end
     return
