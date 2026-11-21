@@ -322,16 +322,17 @@ local function render()
   for _, item in ipairs(visible) do
     local appName = displayName(item, resolveLang())
     local summary = truncate(item.summary, 64)
-    local head
+    -- Head parts: the app name renders bold, the summary stays regular.
+    local headParts = {}
     if appName and appName ~= "" and summary ~= "" then
-      head = appName .. " · " .. summary
+      table.insert(headParts, ui.label({ text = appName, fontSize = fs(12), fontWeight = "bold", color = "on_surface" }))
+      table.insert(headParts, ui.label({ text = " · " .. summary, fontSize = fs(12), color = "on_surface" }))
     elseif summary ~= "" then
-      head = summary
+      table.insert(headParts, ui.label({ text = summary, fontSize = fs(12), color = "on_surface" }))
+    elseif (item.body or "") ~= "" then
+      table.insert(headParts, ui.label({ text = truncate(item.body, 64), fontSize = fs(12), color = "on_surface" }))
     else
-      head = truncate(item.body, 64)
-    end
-    if head == "" then
-      head = "?"
+      table.insert(headParts, ui.label({ text = "?", fontSize = fs(12), color = "on_surface" }))
     end
     -- One head line holds icon, title, badge and age together (centered
     -- against each other, so the icon stays in line with the title); a
@@ -345,7 +346,9 @@ local function render()
       -- Unknown sender: generic glyph placeholder instead of no icon.
       table.insert(headChildren, ui.glyph({ name = "notification", size = fs(16), color = "on_surface_variant" }))
     end
-    table.insert(headChildren, ui.label({ text = head, fontSize = fs(12), color = "on_surface" }))
+    for _, part in ipairs(headParts) do
+      table.insert(headChildren, part)
+    end
     local groupCount = tonumber(item.count) or 1
     if groupCount > 1 then
       table.insert(headChildren, ui.label({
