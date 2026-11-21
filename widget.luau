@@ -371,8 +371,9 @@ local function render()
       table.insert(headChildren, ui.label({ text = age, fontSize = fs(10), color = "on_surface_variant" }))
     end
 
+    local hasBody = showBody and (item.body or "") ~= ""
     local cardChildren = { ui.row({ gap = fs(5), align = "center" }, headChildren) }
-    if showBody and (item.body or "") ~= "" then
+    if hasBody then
       table.insert(cardChildren, ui.column({ paddingH = fs(21) }, {
         ui.label({
           text = item.body,
@@ -388,11 +389,15 @@ local function render()
     -- fill tints with the on-surface color (near-white in dark mode,
     -- near-black in light mode) so the card keeps contrast on any
     -- background, black wallpapers included; a hairline outline marks
-    -- the edge.
+    -- the edge. Body-less cards breathe more instead of collapsing
+    -- into a thin strip: symmetric padding both sides of the head line
+    -- acts as a minimum height while keeping the content optically
+    -- centered (a raw minHeight would leave the line sitting at the
+    -- top of the taller box, since columns align children from there).
     table.insert(children, ui.column({
       gap = fs(2),
       paddingH = fs(10),
-      paddingV = fs(7),
+      paddingV = hasBody and fs(7) or fs(10),
       radius = fs(8),
       fill = "on_surface/0.08",
       border = "outline_variant/0.12",
