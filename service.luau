@@ -152,8 +152,11 @@ local function unescapeDbus(s)
   return (s:gsub("\\n", "\n"):gsub("\\t", "\t"):gsub('\\"', '"'):gsub("\\\\", "\\"))
 end
 
--- A withdrawn notification (reason 3) leaves the list; a grouped entry
--- loses one occurrence instead.
+-- A withdrawn notification (reason 3) leaves the list. Apps replace a
+-- live notification for follow-up messages (replaces_id reuses the same
+-- id), so one id can carry several occurrences: closing it withdraws
+-- them all — every id occurrence goes and the group count drops by as
+-- many, removing the entry when nothing is left.
 local function handleClosed(id, reason)
   if reason ~= 3 then
     return
@@ -161,18 +164,21 @@ local function handleClosed(id, reason)
   for i, item in ipairs(items) do
     local ids = type(item.daemonIds) == "table" and item.daemonIds or nil
     if ids then
-      for j, did in ipairs(ids) do
-        if did == id then
+      local withdrawn = 0
+      for j = #ids, 1, -1 do
+        if ids[j] == id then
           table.remove(ids, j)
-          if (item.count or 1) > 1 then
-            item.count = item.count - 1
-          else
-            table.remove(items, i)
-          end
-          log("notification " .. tostring(id) .. " withdrawn by its app")
-          publish()
-          return
+          withdrawn = withdrawn + 1
         end
+      end
+      if withdrawn > 0 then
+        item.count = math.max(0, (tonumber(item.count) or 1) - withdrawn)
+        if item.count <= 0 then
+          table.remove(items, i)
+        end
+        log("notification " .. tostring(id) .. " withdrawn by its app (" .. withdrawn .. " occurrence(s))")
+        publish()
+        return
       end
     end
   end

@@ -74,6 +74,12 @@ widget.
 - Notifications withdrawn by their sending app (read in the app itself,
   like chat apps marking as read) leave the list: the daemon-assigned ids
   are correlated through captured method returns, and `NotificationClosed`
-  signals with reason 3 remove the matching entry. A grouped entry loses
-  one occurrence instead. Expired or user-dismissed toasts stay, matching
-  Noctalia's own unread model.
+  signals with reason 3 remove the matching entry — every occurrence of
+  the id at once, since replaced notifications (`replaces_id`) carry
+  several messages under one id. Expired or user-dismissed toasts stay,
+  matching Noctalia's own unread model.
+- A withdrawal can only be seen while its toast is still alive: once the
+  toast expires, the daemon drops the id (a later `CloseNotification`
+  returns `NotFound` and no signal follows), so a message read in the app
+  after its toast expired keeps its entry until the list is cleared. This
+  is a property of the D-Bus notification lifecycle, not of the plugin.
