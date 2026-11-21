@@ -1,6 +1,6 @@
 id = "dan/missed-notifications"
 name = "Missed Notifications"
-version = "0.8.2"
+version = "0.9.0"
 plugin_api = 51
 author = "dan"
 license = "MIT"
@@ -58,6 +58,17 @@ options = [
   { value = "auto", label_key = "settings.language.auto" },
   { value = "en", label_key = "settings.language.en" },
   { value = "it", label_key = "settings.language.it" },
+]
+
+[[setting]]
+key = "order"
+type = "select"
+label_key = "settings.order.label"
+description_key = "settings.order.description"
+default = "newest"
+options = [
+  { value = "newest", label_key = "settings.order.newest" },
+  { value = "oldest", label_key = "settings.order.oldest" },
 ]
 
 [[service]]

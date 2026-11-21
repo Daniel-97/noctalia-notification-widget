@@ -213,6 +213,7 @@ local function render()
   local rawMax = tonumber(cfg("max_items", 6)) or 6
   local maxItems = math.max(1, math.min(20, rawMax))
   local showBody = cfg("show_body", false) == true
+  local newestFirst = tostring(cfg("order", "newest")) ~= "oldest"
   local count = #items
 
   local header
@@ -236,10 +237,20 @@ local function render()
     }),
   }
 
-  for i, item in ipairs(items) do
-    if i > maxItems then
-      break
+  -- Visible slice: newest first shows the tail of the list in reverse
+  -- order, oldest first keeps the arrival order (previous behavior).
+  local visible = {}
+  if newestFirst then
+    for i = count, math.max(1, count - maxItems + 1), -1 do
+      table.insert(visible, items[i])
     end
+  else
+    for i = 1, math.min(count, maxItems) do
+      table.insert(visible, items[i])
+    end
+  end
+
+  for _, item in ipairs(visible) do
     local app = tostring(item.app or "")
     local summary = truncate(item.summary, 64)
     local head

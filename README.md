@@ -35,6 +35,7 @@ notifications**: everything received since the list was last cleared.
 | `show_body`            | bool   | false    | Show the body under each summary line              |
 | `list_mode`            | select | "unread" | Unread only (clears when the control center opens) or All (rolling recap, click to empty) |
 | `language`             | select | "auto"   | Widget texts language: auto (system locale), English, Italiano |
+| `order`                | select | "newest" | Newest notifications at the top, or arrival order (oldest first) |
 
 ## Requirements
 

@@ -31,6 +31,12 @@
       "auto": "Auto",
       "en": "English",
       "it": "Italiano"
+    },
+    "order": {
+      "label": "Order",
+      "description": "Newest notifications at the top, or keep arrival order (oldest first).",
+      "newest": "Newest first",
+      "oldest": "Oldest first"
     }
   },
   "widget": {
