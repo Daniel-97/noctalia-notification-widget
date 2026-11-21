@@ -116,8 +116,11 @@ end
 --       method call ... serial=9 ...; member=Notify
 --          string "app_name"  (first four string lines)
 --   * the daemon's method returns — the assigned notification id,
---     correlated through reply_serial -> the call's serial:
---       method return ... reply_serial=9
+--     correlated through the caller's unique name plus the call serial
+--     (serials are unique only per connection, so the caller must be
+--     part of the key — fresh clients and sandbox proxies reuse the
+--     same small numbers):
+--       method return ... -> destination=:1.99 ... reply_serial=9
 --          uint32 410
 --   * NotificationClosed signals — reason 3 means the sending app
 --     withdrew the notification (read in the app itself), so the entry
@@ -133,15 +136,21 @@ local closedValues = {}
 local hintKey = nil
 local current = nil
 local pendingSerial = nil
-local pendingReplySerial = nil
+local pendingSender = nil
+local pendingReplyKey = nil
 
--- Call serial -> item awaiting the daemon-assigned id (bounded FIFO).
+-- Caller unique name + call serial -> item awaiting the daemon-assigned
+-- id (bounded FIFO). Serials are unique only per connection, so the key
+-- pairs the serial with the caller's unique name: fresh clients
+-- (notify-send, gdbus, busctl) and sandbox proxies all reuse the same
+-- small serial numbers.
 local pendingBySerial = {}
 local serialQueue = {}
 
 local function rememberSerial(serial, item)
-  pendingBySerial[serial] = item
-  table.insert(serialQueue, serial)
+  local key = (pendingSender or "") .. "/" .. tostring(serial)
+  pendingBySerial[key] = item
+  table.insert(serialQueue, key)
   while #serialQueue > 200 do
     local old = table.remove(serialQueue, 1)
     pendingBySerial[old] = nil
@@ -235,6 +244,7 @@ local function handleNotifyLine(line)
     resetMsg()
     msgKind = "notify"
     pendingSerial = tonumber(line:match("serial=(%d+)"))
+    pendingSender = line:match("sender=([^ ]+)") or ""
     current = nil
     return
   end
@@ -245,12 +255,16 @@ local function handleNotifyLine(line)
   end
   if line:find("^method return") then
     local rs = tonumber(line:match("reply_serial=(%d+)"))
+    local dest = line:match("destination=([^ ]+)") or ""
     resetMsg()
     -- Only returns answering a captured Notify call matter; the daemon
-    -- also returns server-information and introspection noise.
-    if rs and pendingBySerial[rs] then
+    -- also returns server-information and introspection noise. The
+    -- return names the original caller as its destination, which pairs
+    -- with the call's sender to key the pending map.
+    local key = dest .. "/" .. tostring(rs)
+    if rs and pendingBySerial[key] then
       msgKind = "return"
-      pendingReplySerial = rs
+      pendingReplyKey = key
     end
     return
   end
@@ -263,8 +277,8 @@ local function handleNotifyLine(line)
   if msgKind == "return" then
     local v = line:match("^%s*uint32%s+(%d+)%s*$")
     if v then
-      local item = pendingBySerial[pendingReplySerial]
-      pendingBySerial[pendingReplySerial] = nil
+      local item = pendingBySerial[pendingReplyKey]
+      pendingBySerial[pendingReplyKey] = nil
       msgKind = nil
       if item then
         item.daemonIds = item.daemonIds or {}

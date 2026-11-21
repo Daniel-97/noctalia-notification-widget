@@ -321,9 +321,9 @@ local function render()
 
   for _, item in ipairs(visible) do
     local appName = displayName(item, resolveLang())
-    -- Aggressive truncation: 40 keeps the head line from stretching the
-    -- card well past the body's measure.
-    local summary = truncate(item.summary, 40)
+    -- Truncation at 60 keeps the head line within a sane bound while
+    -- letting real titles breathe.
+    local summary = truncate(item.summary, 60)
     -- Head parts: the app name renders bold, the summary stays regular.
     local headParts = {}
     if appName and appName ~= "" and summary ~= "" then
@@ -332,7 +332,7 @@ local function render()
     elseif summary ~= "" then
       table.insert(headParts, ui.label({ text = summary, fontSize = fs(12), color = "on_surface" }))
     elseif (item.body or "") ~= "" then
-      table.insert(headParts, ui.label({ text = truncate(item.body, 40), fontSize = fs(12), color = "on_surface" }))
+      table.insert(headParts, ui.label({ text = truncate(item.body, 60), fontSize = fs(12), color = "on_surface" }))
     else
       table.insert(headParts, ui.label({ text = "?", fontSize = fs(12), color = "on_surface" }))
     end
@@ -396,10 +396,13 @@ local function render()
     -- acts as a minimum height while keeping the content optically
     -- centered (a raw minHeight would leave the line sitting at the
     -- top of the taller box, since columns align children from there).
+    -- A minimum width keeps short titles from shrinking the card below
+    -- the body-driven measure, so the stack stays uniform.
     table.insert(children, ui.column({
       gap = fs(2),
       paddingH = fs(10),
       paddingV = hasBody and fs(7) or fs(13),
+      minWidth = fs(300),
       radius = fs(8),
       fill = "on_surface/0.08",
       border = "outline_variant/0.12",
