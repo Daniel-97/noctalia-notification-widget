@@ -75,6 +75,7 @@ local function restoreStore()
         icon = item.icon ~= nil and tostring(item.icon) or "",
         desktop = item.desktop ~= nil and tostring(item.desktop) or nil,
         receivedAt = type(item.receivedAt) == "number" and item.receivedAt or nil,
+        count = type(item.count) == "number" and item.count or 1,
       })
     end
   end
@@ -132,11 +133,12 @@ local function onNotification(app, icon, summary, body)
   end
   local last = items[#items]
   if last and last.app == app and last.summary == summary then
-    -- Same app and summary as the last entry: treat as an update of the
-    -- same notification (chat apps resending) instead of a new one.
+    -- Same app and summary as the last entry: group into it (chat apps
+    -- resending) — keep the latest body and count the occurrences.
     last.body = body
     last.icon = icon
     last.receivedAt = os.time()
+    last.count = (last.count or 1) + 1
     publish()
     return last
   end
@@ -147,6 +149,7 @@ local function onNotification(app, icon, summary, body)
     icon = icon,
     desktop = nil,
     receivedAt = os.time(),
+    count = 1,
   }
   table.insert(items, item)
   while #items > MAX_STORED do

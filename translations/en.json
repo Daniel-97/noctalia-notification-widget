@@ -46,6 +46,7 @@
     "header_all_one": "1 recent notification",
     "more": "+ %d more",
     "empty": "No notifications",
+    "count": "(x%d)",
     "age_now": "just now",
     "age_min_one": "1 minute ago",
     "age_min": "%d minutes ago",

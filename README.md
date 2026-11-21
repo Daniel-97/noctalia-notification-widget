@@ -62,8 +62,9 @@ widget.
 - App icons are resolved through `noctalia.appIconPath` (desktop-entry
   hint, then the notification's `app_icon`, then the app name); unknown
   senders get a generic glyph.
-- Consecutive notifications with the same app and summary update the last
-  entry instead of piling up (chat apps resending).
+- Consecutive notifications with the same app and summary are grouped
+  into one entry with an occurrence count (`(x2)`, `(x3)`...) and the
+  latest body; a different notification in between closes the group.
 - Leave the widget box auto-fit (`box_width`/`box_height` `0.0`): a fixed
   box set from the editor makes the host rescale the content, so text size
   varies with the amount of content.

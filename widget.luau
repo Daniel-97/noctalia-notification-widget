@@ -333,13 +333,22 @@ local function render()
     if head == "" then
       head = "?"
     end
-    local headRow = ui.label({ text = head, fontSize = fs(12), color = "on_surface" })
+    local headRowChildren = { ui.label({ text = head, fontSize = fs(12), color = "on_surface" }) }
+    local groupCount = tonumber(item.count) or 1
+    if groupCount > 1 then
+      table.insert(headRowChildren, ui.label({
+        text = trf("widget.count", groupCount, "(x%d)"),
+        fontSize = fs(10),
+        color = "on_surface_variant",
+      }))
+    end
     local age = formatAge(item.receivedAt)
     if age then
-      headRow = ui.row({ gap = fs(5), align = "center" }, {
-        headRow,
-        ui.label({ text = age, fontSize = fs(10), color = "on_surface_variant" }),
-      })
+      table.insert(headRowChildren, ui.label({ text = age, fontSize = fs(10), color = "on_surface_variant" }))
+    end
+    local headRow = headRowChildren[1]
+    if #headRowChildren > 1 then
+      headRow = ui.row({ gap = fs(5), align = "center" }, headRowChildren)
     end
     local lines = { headRow }
     if showBody and (item.body or "") ~= "" then
