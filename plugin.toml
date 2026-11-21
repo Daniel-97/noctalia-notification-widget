@@ -1,6 +1,6 @@
 id = "dan/missed-notifications"
 name = "Missed Notifications"
-version = "0.9.1"
+version = "0.9.2"
 plugin_api = 51
 author = "dan"
 license = "MIT"

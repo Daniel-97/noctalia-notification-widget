@@ -24,7 +24,8 @@ notifications**: everything received since the list was last cleared.
 - `widget.luau` (`[[desktop_widget]]`) renders the list: a bell header with
   the count, then one line per notification with its **relative age**
   ("3 minuti fa", "2 ore fa"...) next to the summary, refreshed on every
-  render (~5 s). Hidden when the list is empty.
+  render (~5 s). With an empty list the widget stays visible in a dimmed
+  empty state instead of hiding.
 
 ## Settings
 

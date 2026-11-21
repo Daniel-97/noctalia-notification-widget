@@ -45,6 +45,8 @@
     "header_all": "%d recent notifications",
     "header_all_one": "1 recent notification",
     "more": "+ %d more",
+    "empty_unread": "No unread notifications",
+    "empty_all": "No recent notifications",
     "age_now": "just now",
     "age_min_one": "1 minute ago",
     "age_min": "%d minutes ago",

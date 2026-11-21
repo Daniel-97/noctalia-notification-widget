@@ -269,7 +269,20 @@ local function render()
   refreshScale()
   local items = type(state.items) == "table" and state.items or {}
   if #items == 0 then
-    desktopWidget.setVisible(false)
+    -- Empty state: keep the widget visible (dimmed) so its presence is
+    -- clear even with nothing to show.
+    local listMode = tostring(cfg("list_mode", "unread"))
+    local emptyText
+    if listMode == "all" then
+      emptyText = trs("widget.empty_all", "Nessuna notifica recente")
+    else
+      emptyText = trs("widget.empty_unread", "Nessuna notifica non letta")
+    end
+    desktopWidget.setVisible(true)
+    desktopWidget.render(ui.row({ gap = fs(6), align = "center" }, {
+      ui.glyph({ name = "bell", size = fs(15), color = "on_surface_variant" }),
+      ui.label({ text = emptyText, fontSize = fs(14), color = "on_surface_variant" }),
+    }))
     return
   end
 

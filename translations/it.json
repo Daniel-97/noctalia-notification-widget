@@ -45,6 +45,8 @@
     "header_all": "%d notifiche recenti",
     "header_all_one": "Una notifica recente",
     "more": "+ altre %d",
+    "empty_unread": "Nessuna notifica non letta",
+    "empty_all": "Nessuna notifica recente",
     "age_now": "adesso",
     "age_min_one": "1 minuto fa",
     "age_min": "%d minuti fa",
