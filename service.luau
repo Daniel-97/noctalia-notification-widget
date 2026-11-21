@@ -80,6 +80,7 @@ local function restoreStore()
         desktop = item.desktop ~= nil and tostring(item.desktop) or nil,
         receivedAt = type(item.receivedAt) == "number" and item.receivedAt or nil,
         count = type(item.count) == "number" and item.count or 1,
+        urgent = item.urgent == true,
       })
     end
   end
@@ -238,6 +239,17 @@ local function resetMsg()
   hintKey = nil
 end
 
+-- Known hint keys we care about, in the hints dict after the body.
+local function hintKeyFor(line)
+  if line:find('^%s*string%s+"desktop%-entry"%s*$') then
+    return "desktop-entry"
+  end
+  if line:find('^%s*string%s+"urgency"%s*$') then
+    return "urgency"
+  end
+  return nil
+end
+
 local function handleNotifyLine(line)
   -- Header classification (order matters: specific members first).
   if line:find("member=Notify", 1, true) then
@@ -306,18 +318,29 @@ local function handleNotifyLine(line)
     return
   end
 
-  -- Inside the hints dict: the "desktop-entry" key is followed by a
-  -- variant string with the value (e.g. "org.telegram.desktop").
-  if hintKey == "desktop-entry" then
-    local v = line:match('^%s*variant%s+string%s+"(.*)"%s*$')
+  -- Inside the hints dict: a known key is followed by its variant value.
+  -- Keys can arrive in any order, so a new dict key re-runs the lookup.
+  if hintKey ~= nil then
+    local v
+    if hintKey == "urgency" then
+      v = line:match("^%s*variant%s+byte%s+(%d+)%s*$")
+    else
+      v = line:match('^%s*variant%s+string%s+"(.*)"%s*$')
+    end
     if v then
+      local key = hintKey
       hintKey = nil
       if current then
-        current.desktop = unescapeDbus(v)
+        if key == "urgency" then
+          -- Urgency byte: 0 low, 1 normal, 2 critical.
+          current.urgent = tonumber(v) == 2
+        else
+          current.desktop = unescapeDbus(v)
+        end
         publish()
       end
     elseif line:match('^%s*string%s+"') then
-      hintKey = nil -- a different dict key: not our value
+      hintKey = hintKeyFor(line) -- a different dict key: not our value
     end
     return
   end
@@ -336,10 +359,8 @@ local function handleNotifyLine(line)
       return
     end
   end
-  -- Hints come after the body: look for the desktop-entry dict key.
-  if line:find('^%s*string%s+"desktop%-entry"%s*$') then
-    hintKey = "desktop-entry"
-  end
+  -- Hints come after the body: look for known dict keys.
+  hintKey = hintKeyFor(line)
 end
 
 local function startNotifyWatch()

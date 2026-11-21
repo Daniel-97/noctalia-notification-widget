@@ -339,6 +339,11 @@ local function render()
     else
       table.insert(headParts, ui.label({ text = "?", fontSize = fs(12), color = "on_surface" }))
     end
+    -- Critical notifications (urgency hint == 2) carry a small accent
+    -- dot right after the title.
+    if item.urgent == true then
+      table.insert(headParts, ui.label({ text = "●", fontSize = fs(9), color = "error" }))
+    end
     -- One head line holds icon, title, badge and age together (centered
     -- against each other, so the icon stays in line with the title); a
     -- growing spacer pins the age to the card's right edge. The body
