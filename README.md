@@ -9,7 +9,7 @@ rounded card over the lock backdrop.
 
 | Field | Value |
 | --- | --- |
-| ID | `daniel-97/missed-notifications` |
+| ID | `daniel-97/lockscreen-notifications` |
 | Entries | Service: `watcher`; desktop widget: `widget` |
 
 ## Requirements
@@ -21,8 +21,8 @@ Install `dbus-monitor` (dbus tools) and `pgrep` (procps) on `PATH`.
 Run as a local source while developing:
 
 ```sh
-noctalia msg plugins source add missed-dev path <this repo's parent>
-noctalia msg plugins enable daniel-97/missed-notifications
+noctalia msg plugins source add lockscreen-dev path <this repo's parent>
+noctalia msg plugins enable daniel-97/lockscreen-notifications
 ```
 
 Then add the widget from the lockscreen widget editor

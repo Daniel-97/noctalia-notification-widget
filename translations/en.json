@@ -69,7 +69,7 @@
     "more": "+ %d more",
     "empty": "No notifications",
     "preview": "Preview",
-    "preview_app": "Missed Notifications",
+    "preview_app": "Lockscreen Notifications",
     "preview_title": "Test notification",
     "preview_body": "Preview only. Disable it in the plugin settings.",
     "count": "(%d)",

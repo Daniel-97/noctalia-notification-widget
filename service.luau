@@ -1,5 +1,5 @@
 --!nonstrict
--- Missed Notifications watcher — headless [[service]] entry.
+-- Lockscreen Notifications watcher — headless [[service]] entry.
 --
 -- Keeps a plugin-side list of "unread" notifications:
 --   * eavesdrops every org.freedesktop.Notifications.Notify call with
@@ -28,7 +28,7 @@ local MAX_STORED = 30
 local items = {}
 
 local function log(msg)
-  noctalia.log("[missed-notifications] " .. msg)
+  noctalia.log("[lockscreen-notifications] " .. msg)
 end
 
 local function cfg(key, fallback)
@@ -48,7 +48,7 @@ end
 -- ------------------------------------------------------------------
 
 local function publish()
-  noctalia.state.set("missed", {
+  noctalia.state.set("notifications", {
     items = items,
     count = #items,
   })
@@ -416,7 +416,7 @@ local function startNotifyWatch()
     -- same missing dependency would spam the desktop forever.
     if not startNotifyWatch.errorNotified then
       startNotifyWatch.errorNotified = true
-      noctalia.notifyError("Missed Notifications", noctalia.tr("notify.error"))
+      noctalia.notifyError("Lockscreen Notifications", noctalia.tr("notify.error"))
     end
     return
   end

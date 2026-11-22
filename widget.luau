@@ -1,5 +1,5 @@
 --!nonstrict
--- Missed Notifications widget — [[desktop_widget]] entry.
+-- Lockscreen Notifications widget — [[desktop_widget]] entry.
 -- Renders the list published by the watcher service: a bell header with the
 -- count, then one line per notification (app · summary, body optional).
 -- The empty state stays visible and says "No notifications"; the widget has
@@ -11,7 +11,7 @@
 -- own region while the screen stays locked, leaving older cards blank
 -- until the next unlock. Do not reserve a fixed height here.
 
-local state = noctalia.state.get("missed")
+local state = noctalia.state.get("notifications")
 if type(state) ~= "table" then
   state = { locked = false, items = {}, count = 0 }
 end
@@ -160,7 +160,7 @@ local function previewItems(n)
   -- The newest sample (displayed first with the default order) explains
   -- itself, so the first card a user sees is the guide.
   result[n] = {
-    app = trs("widget.preview_app", "Missed Notifications"),
+    app = trs("widget.preview_app", "Lockscreen Notifications"),
     summary = trs("widget.preview_title", "Test notification"),
     body = trs("widget.preview_body",
       "Sample cards for positioning. Turn off \"Preview sample notifications\" in the plugin settings."),
@@ -591,7 +591,7 @@ local function render()
 end
 
 pcall(function()
-  noctalia.state.watch("missed", function(value)
+  noctalia.state.watch("notifications", function(value)
     if type(value) == "table" then
       state = value
     else
@@ -604,7 +604,7 @@ end)
 function update()
   -- Poll fallback in case state.watch is unavailable in this entry type.
   noctalia.setUpdateInterval(5000)
-  local v = noctalia.state.get("missed")
+  local v = noctalia.state.get("notifications")
   if type(v) == "table" then
     state = v
   end
