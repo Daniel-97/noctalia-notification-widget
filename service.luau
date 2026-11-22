@@ -184,7 +184,11 @@ local function handleClosed(id, reason)
   end
 end
 
-local function onNotification(app, icon, summary, body)
+-- Fields are applied inside onNotification so the state snapshot it
+-- publishes is complete: setting the desktop hint after the internal
+-- publish used to leave the widget's copy one publish behind (no app
+-- name, no icon until some later event).
+local function onNotification(app, icon, summary, body, desktop, urgent)
   if summary == "" and body == "" then
     return nil
   end
@@ -200,6 +204,10 @@ local function onNotification(app, icon, summary, body)
       item.icon = icon
       item.receivedAt = os.time()
       item.count = (item.count or 1) + 1
+      if desktop then
+        item.desktop = desktop
+      end
+      item.urgent = urgent
       table.insert(items, item)
       publish()
       return item
@@ -210,7 +218,8 @@ local function onNotification(app, icon, summary, body)
     summary = summary,
     body = body,
     icon = icon,
-    desktop = nil,
+    desktop = desktop,
+    urgent = urgent,
     receivedAt = os.time(),
     count = 1,
   }
@@ -234,21 +243,20 @@ local function flushNotify()
     log("transient notification skipped (" .. tostring(nStrings[3]) .. ")")
     return
   end
-  local item = onNotification(nStrings[1] or "", nStrings[2] or "", nStrings[3] or "", nStrings[4] or "")
-  if item then
-    if hintDesktop then
-      item.desktop = hintDesktop
-    end
-    item.urgent = hintUrgent
-    if pendingSerial then
-      rememberSerial(pendingSerial, item)
-    end
+  local item = onNotification(
+    nStrings[1] or "", nStrings[2] or "", nStrings[3] or "", nStrings[4] or "",
+    hintDesktop, hintUrgent)
+  if item and pendingSerial then
+    rememberSerial(pendingSerial, item)
   end
 end
 
 local function resetMsg()
-  -- A new message started: commit a fully-collected notification first
-  -- (its int32 timeout should already have done it; this is a guard).
+  -- A new message started: commit the fully-collected notification
+  -- first. This is the ONLY commit point: hint values and container
+  -- shapes differ wildly between apps (Signal embeds avatars as
+  -- image-data structs with their own int32 lines), so the message
+  -- boundary is the one deterministic place where everything is known.
   flushNotify()
   msgKind = nil
   nStrings = {}
@@ -379,12 +387,6 @@ local function handleNotifyLine(line)
       table.insert(nStrings, unescapeDbus(s))
       return
     end
-  end
-  -- The expire timeout is the message's last argument: the entry is
-  -- committed there, once every hint is known.
-  if msgKind == "notify" and line:match("^%s*int32%s+%-?%d+%s*$") then
-    flushNotify()
-    return
   end
   -- Hints come after the body: look for known dict keys.
   hintKey = hintKeyFor(line)
