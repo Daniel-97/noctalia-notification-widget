@@ -171,6 +171,18 @@ local function iconPathFor(item, size)
   return nil
 end
 
+-- App-provided image (image-path hint): a file path the widget renders
+-- as the leading image in place of the app icon. No readFile
+-- validation: large files would be read into memory for nothing, and
+-- the image renderer handles missing/broken paths gracefully.
+local function providedImagePath(item)
+  local p = item.image
+  if type(p) ~= "string" or p == "" then
+    return nil
+  end
+  return p
+end
+
 -- Relative age text for an entry ("just now", "1 minute ago", "2 hours ago"...).
 local function formatAgeRelative(t)
   if type(t) ~= "number" or t <= 0 then
@@ -394,16 +406,22 @@ local function render()
     -- growing spacer pins the age to the card's right edge. The body
     -- hangs below, indented past the icon.
     local headChildren = {}
-    local ok, ipath = pcall(iconPathFor, item, fs(16))
     -- Optical alignment: a centered text label's glyph center sits a
     -- touch lower than its box center, so a box-centered icon rides
     -- slightly high; a hairline spacer on top nudges it down to match.
     local iconElement
-    if ok and ipath then
-      iconElement = ui.image({ path = ipath, width = fs(16), height = fs(16), fit = "contain" })
+    local provided = providedImagePath(item)
+    if provided then
+      -- The app shipped its own image: show it instead of the app icon.
+      iconElement = ui.image({ path = provided, width = fs(16), height = fs(16), fit = "contain" })
     else
-      -- Unknown sender: generic glyph placeholder instead of no icon.
-      iconElement = ui.glyph({ name = "notification", size = fs(16), color = "on_surface_variant" })
+      local ok, ipath = pcall(iconPathFor, item, fs(16))
+      if ok and ipath then
+        iconElement = ui.image({ path = ipath, width = fs(16), height = fs(16), fit = "contain" })
+      else
+        -- Unknown sender: generic glyph placeholder instead of no icon.
+        iconElement = ui.glyph({ name = "notification", size = fs(16), color = "on_surface_variant" })
+      end
     end
     table.insert(headChildren, ui.column({ gap = 0 }, {
       ui.spacer({ height = fs(3) }),

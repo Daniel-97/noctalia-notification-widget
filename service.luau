@@ -126,6 +126,7 @@ local hintKey = nil
 local hintDesktop = nil
 local hintUrgent = false
 local hintTransient = false
+local hintImagePath = nil
 local pendingSerial = nil
 local pendingSender = nil
 local pendingReplyKey = nil
@@ -188,7 +189,7 @@ end
 -- publishes is complete: setting the desktop hint after the internal
 -- publish used to leave the widget's copy one publish behind (no app
 -- name, no icon until some later event).
-local function onNotification(app, icon, summary, body, desktop, urgent)
+local function onNotification(app, icon, summary, body, desktop, urgent, image)
   if summary == "" and body == "" then
     return nil
   end
@@ -207,6 +208,9 @@ local function onNotification(app, icon, summary, body, desktop, urgent)
       if desktop then
         item.desktop = desktop
       end
+      if image then
+        item.image = image
+      end
       item.urgent = urgent
       table.insert(items, item)
       publish()
@@ -220,6 +224,7 @@ local function onNotification(app, icon, summary, body, desktop, urgent)
     icon = icon,
     desktop = desktop,
     urgent = urgent,
+    image = image,
     receivedAt = os.time(),
     count = 1,
   }
@@ -245,7 +250,7 @@ local function flushNotify()
   end
   local item = onNotification(
     nStrings[1] or "", nStrings[2] or "", nStrings[3] or "", nStrings[4] or "",
-    hintDesktop, hintUrgent)
+    hintDesktop, hintUrgent, hintImagePath)
   if item and pendingSerial then
     rememberSerial(pendingSerial, item)
   end
@@ -265,6 +270,7 @@ local function resetMsg()
   hintDesktop = nil
   hintUrgent = false
   hintTransient = false
+  hintImagePath = nil
 end
 
 -- Known hint keys we care about, in the hints dict after the body.
@@ -277,6 +283,9 @@ local function hintKeyFor(line)
   end
   if line:find('^%s*string%s+"transient"%s*$') then
     return "transient"
+  end
+  if line:find('^%s*string%s+"image%-path"%s*$') then
+    return "image-path"
   end
   return nil
 end
@@ -367,7 +376,16 @@ local function handleNotifyLine(line)
         hintTransient = true
         hintKey = nil
       end
+    elseif hintKey == "image-path" then
+      local v = line:match('^%s*variant%s+string%s+"(.*)"%s*$')
+      if v then
+        -- Apps send a plain path or a file:// URI; the widget renders
+        -- it as the leading image in place of the app icon.
+        hintImagePath = (unescapeDbus(v):gsub("^file://", ""))
+        hintKey = nil
+      end
     else
+      -- desktop-entry: a plain string id such as org.telegram.desktop.
       local v = line:match('^%s*variant%s+string%s+"(.*)"%s*$')
       if v then
         hintDesktop = unescapeDbus(v)

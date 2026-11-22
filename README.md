@@ -67,7 +67,10 @@ widget.
   continuity.
 - App icons are resolved through `noctalia.appIconPath` (desktop-entry
   hint, then the notification's `app_icon`, then the app name); unknown
-  senders get a generic glyph.
+  senders get a generic glyph. Apps that send an `image-path` hint get
+  their own image as the leading image of the card. Inline `image-data`
+  images (Signal sends the chat avatar that way) cannot be decoded in
+  the plugin sandbox — no image encoder is available to plugins.
 - Consecutive notifications with the same app and summary are grouped
   into one entry with an occurrence count (`(2)`, `(3)`...) and the
   latest body, wherever the older entry sits in the list; a grouped
