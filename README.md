@@ -18,18 +18,19 @@ Install `dbus-monitor` (dbus tools) and `pgrep` (procps) on `PATH`.
 
 ## Usage
 
-Run as a local source while developing:
+Install **Lockscreen Notification Widget** from the Noctalia plugin store
+(Settings → Plugins) and enable it. The `watcher` service starts with the
+plugin and begins collecting notifications.
+
+Then add the widget from the lockscreen editor:
 
 ```sh
-noctalia msg plugins source add lockscreen-dev path <this repo's parent>
-noctalia msg plugins enable daniel-97/lockscreen-notifications
+noctalia msg lockscreen-widgets-edit
 ```
 
-Then add the widget from the lockscreen widget editor
-(`noctalia msg lockscreen-widgets-edit`) — or the desktop editor
-(`noctalia msg desktop-widgets-edit`) — by picking **Lockscreen
-Notification Widget** in the add-widget list and placing it like any other
-widget.
+or from the desktop editor (`noctalia msg desktop-widgets-edit`), by picking
+**Lockscreen Notification Widget** in the add-widget list and placing it like
+any other widget.
 
 - While locked, the list shows notifications received and not yet
   acknowledged.

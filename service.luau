@@ -409,13 +409,19 @@ local function handleNotifyLine(line)
   hintKey = hintKeyFor(line)
 end
 
+-- Set once when dbus-monitor is missing, so the error toast is shown only
+-- once even though the watchdog retries every 30 s.
+local watcherErrorNotified = false
+
 local function startNotifyWatch()
   if not noctalia.commandExists("dbus-monitor") then
     log("dbus-monitor not found on PATH")
     -- Once only: the watchdog retries every 30 s, and re-toasting the
-    -- same missing dependency would spam the desktop forever.
-    if not startNotifyWatch.errorNotified then
-      startNotifyWatch.errorNotified = true
+    -- same missing dependency would spam the desktop forever. A
+    -- module-level flag is required because Lua functions cannot hold
+    -- fields.
+    if not watcherErrorNotified then
+      watcherErrorNotified = true
       noctalia.notifyError("Lockscreen Notifications", noctalia.tr("notify.error"))
     end
     return
