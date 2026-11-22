@@ -2,7 +2,8 @@
 -- Missed Notifications widget — [[desktop_widget]] entry.
 -- Renders the list published by the watcher service: a bell header with the
 -- count, then one line per notification (app · summary, body optional).
--- Hidden when the list is empty. Click clears the list.
+-- The empty state stays visible and says "No notifications"; the widget has
+-- no click handler.
 --
 -- Keep the root height dynamic. Noctalia's lockscreen repaints a widget
 -- fully only when its size changes: a fixed height (fixed editor box or

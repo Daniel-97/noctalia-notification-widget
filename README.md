@@ -38,19 +38,35 @@ widget.
 
 ## Settings
 
+The plugin settings UI has no section primitive, so the manifest order is what groups the controls; the less common options sit behind **Show advanced**.
+
+### Display
+
 | Setting | Type | Default | Description |
 | --- | --- | --- | --- |
 | `max_items` | int | 6 | Max notifications listed (in-memory cap is 30) |
-| `group_notifications` | bool | true | Merge same app + title into one card with a count badge; off gives each notification its own card |
-| `show_icons` | bool | true | Show the sender icon or the app-provided image |
-| `show_age` | bool | true | Show the relative/absolute age on the right |
-| `card_background` | select | "subtle" | Card look: subtle tint, solid surface, liquid glass (translucent frosted fill with a bright rim), or no background |
-| `preview_when_empty` | bool | false | **Advanced.** Show invented example cards (as many as `max_items`) when the list is empty; the first card explains the setting. It stays until disabled |
 | `show_body` | bool | false | Show the body under each summary line |
-| `language` | select | "auto" | Widget texts language: auto (system locale), English, Italiano |
-| `order` | select | "newest" | Newest notifications at the top, or arrival order |
-| `age_format` | select | "relative" | **Advanced**, only when `show_age` is on. Age as relative ("2 hours ago"), absolute ("18:42"), or both joined by a middle dot |
+| `show_icons` | bool | true | Show the sender icon or the app-provided image |
+| `show_age` | bool | true | Show the age on the right of each card |
 | `summary_length` | select | "normal" | Title truncation (40/60/90 chars) and fixed widget width (≈364/442/520 px at 130%) |
+| `card_background` | select | "subtle" | Card look: subtle tint, solid surface, liquid glass (translucent frosted fill with a bright rim), or no background |
+
+### Behaviour
+
+| Setting | Type | Default | Description |
+| --- | --- | --- | --- |
+| `group_notifications` | bool | true | Merge same app + title into one card with a count badge; off gives each notification its own card |
+| `order` | select | "newest" | Newest notifications at the top, or arrival order |
+| `language` | select | "auto" | Widget texts language: auto (system locale), English, Italiano |
+
+### Advanced
+
+These are hidden behind **Show advanced** in the plugin settings.
+
+| Setting | Type | Default | Description |
+| --- | --- | --- | --- |
+| `age_format` | select | "relative" | Age as relative ("2 hours ago"), absolute ("18:42"), or both. Only visible when `show_age` is on |
+| `preview_when_empty` | bool | false | Show invented example cards equal to `max_items` when the list is empty; the first card explains the setting. Stays until disabled |
 
 ## Notes
 
