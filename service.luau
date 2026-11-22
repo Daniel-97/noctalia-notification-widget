@@ -393,7 +393,12 @@ end
 local function startNotifyWatch()
   if not noctalia.commandExists("dbus-monitor") then
     log("dbus-monitor not found on PATH")
-    noctalia.notifyError("Missed Notifications", noctalia.tr("notify.error"))
+    -- Once only: the watchdog retries every 30 s, and re-toasting the
+    -- same missing dependency would spam the desktop forever.
+    if not startNotifyWatch.errorNotified then
+      startNotifyWatch.errorNotified = true
+      noctalia.notifyError("Missed Notifications", noctalia.tr("notify.error"))
+    end
     return
   end
   noctalia.runStream(

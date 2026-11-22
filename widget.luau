@@ -92,10 +92,14 @@ local function trs(key, fallback)
 end
 
 -- tr() with a %d substitution; falls back to a hardcoded template if the
--- translation is missing or cannot be formatted.
+-- translation is missing or cannot be formatted. Singular keys are plain
+-- strings without %d: they are returned as-is.
 local function trf(key, count, fallback)
   local s = T(key)
-  if type(s) == "string" and s:find("%%d") then
+  if type(s) == "string" and s ~= "" then
+    if not s:find("%%d") then
+      return s
+    end
     local okFmt, out = pcall(function() return s:format(count) end)
     if okFmt then
       return out
@@ -233,10 +237,18 @@ end
 local nameCache = {}
 
 local function desktopFileCandidates(desktop)
-  return {
+  local c = {
     "/usr/share/applications/" .. desktop .. ".desktop",
     "/usr/local/share/applications/" .. desktop .. ".desktop",
+    -- Flatpak exports: sandboxed apps install their .desktop files
+    -- here, outside the usual application dirs.
+    "/var/lib/flatpak/exports/share/applications/" .. desktop .. ".desktop",
   }
+  local okHome, home = pcall(function() return os.getenv("HOME") end)
+  if okHome and type(home) == "string" and home ~= "" then
+    table.insert(c, home .. "/.local/share/flatpak/exports/share/applications/" .. desktop .. ".desktop")
+  end
+  return c
 end
 
 local function cleanDesktopId(desktop)
@@ -257,17 +269,22 @@ local function displayName(item, lang)
       if ok and type(raw) == "string" and raw ~= "" then
         local nameGeneric = nil
         local nameLocalized = nil
+        local inMain = false
         for line in raw:gmatch("([^\r\n]+)") do
-          -- Only the main [Desktop Entry] section: stop at the first
-          -- section header (Desktop Actions carry their own Name=).
           if line:match("^%[") then
-            break
-          end
-          if not nameGeneric and line:match("^Name=") then
-            nameGeneric = line:match("^Name=(.*)$")
-          end
-          if not nameLocalized and line:match("^Name%[" .. lang .. "%]=") then
-            nameLocalized = line:match("^Name%[" .. lang .. "%]=(.*)$")
+            if inMain then
+              -- A section after the main one (Desktop Actions carry
+              -- their own Name=): the main section is over.
+              break
+            end
+            inMain = line:match("^%[Desktop Entry%]") ~= nil
+          elseif inMain then
+            if not nameGeneric and line:match("^Name=") then
+              nameGeneric = line:match("^Name=(.*)$")
+            end
+            if not nameLocalized and line:match("^Name%[" .. lang .. "%]=") then
+              nameLocalized = line:match("^Name%[" .. lang .. "%]=(.*)$")
+            end
           end
         end
         name = nameLocalized or nameGeneric
