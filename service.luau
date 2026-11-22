@@ -13,7 +13,10 @@
 --   * notifications withdrawn by their sending app (read in the app
 --     itself) leave the list: the daemon's assigned ids are correlated
 --     through the captured method returns, and NotificationClosed
---     signals with reason 3 remove the matching entry.
+--     signals with reason 3 remove the matching entry;
+--   * the list is memory-only by design: notification content (bodies,
+--     contact names) never touches the disk, so service restarts start
+--     from an empty list. Privacy over continuity.
 --
 -- Noctalia v5 keeps its own notification history encrypted and offers no
 -- public unread API, so this is an eavesdrop-based approximation: "received
@@ -24,7 +27,6 @@
 local MAX_STORED = 30
 
 local items = {}
-local storePath = nil
 
 local function log(msg)
   noctalia.log("[missed-notifications] " .. msg)
@@ -39,64 +41,18 @@ local function cfg(key, fallback)
 end
 
 -- ------------------------------------------------------------------
--- Persistence: the list lives in the plugin data dir so it survives
--- service restarts (plugin reloads, settings changes, shell restarts).
+-- The list lives in memory only, by design: notification content
+-- (bodies, contact names) never touches the disk. The price is that
+-- service restarts — plugin reloads, settings changes, shell restarts
+-- — start from an empty list, which is the privacy trade-off this
+-- plugin deliberately makes.
 -- ------------------------------------------------------------------
-local function saveStore()
-  if not storePath then
-    return
-  end
-  local ok, raw = pcall(function() return noctalia.json.encode({ items = items }) end)
-  if ok and type(raw) == "string" then
-    pcall(function() noctalia.writeFile(storePath, raw) end)
-  end
-end
-
-local function restoreStore()
-  local ok, dir = pcall(function() return noctalia.pluginDataDir() end)
-  if not ok or type(dir) ~= "string" or dir == "" then
-    log("no plugin data dir: list not persisted")
-    return
-  end
-  pcall(function() noctalia.mkdirAll(dir) end)
-  storePath = dir .. "/items.json"
-
-  local okRead, raw = pcall(function() return noctalia.readFile(storePath) end)
-  if not okRead or type(raw) ~= "string" or raw == "" then
-    return
-  end
-  local okDecode, saved = pcall(function() return noctalia.json.decode(raw) end)
-  if not okDecode or type(saved) ~= "table" or type(saved.items) ~= "table" then
-    return
-  end
-  local restored = {}
-  for _, item in ipairs(saved.items) do
-    if type(item) == "table" then
-      table.insert(restored, {
-        app = tostring(item.app or ""),
-        summary = tostring(item.summary or ""),
-        body = tostring(item.body or ""),
-        icon = item.icon ~= nil and tostring(item.icon) or "",
-        desktop = item.desktop ~= nil and tostring(item.desktop) or nil,
-        receivedAt = type(item.receivedAt) == "number" and item.receivedAt or nil,
-        count = type(item.count) == "number" and item.count or 1,
-        urgent = item.urgent == true,
-      })
-    end
-  end
-  while #restored > MAX_STORED do
-    table.remove(restored, 1)
-  end
-  items = restored
-  log("restored " .. #items .. " stored notification(s)")
-end
 
 local function publish()
   noctalia.state.set("missed", {
     items = items,
     count = #items,
   })
-  saveStore()
 end
 
 local function clearList(reason)
@@ -361,10 +317,6 @@ local function handleNotifyLine(line)
       if item then
         item.daemonIds = item.daemonIds or {}
         table.insert(item.daemonIds, tonumber(v))
-        -- The store must reflect the assigned id right away: nothing
-        -- else may publish for a long time, and the ids would only live
-        -- in memory until then.
-        saveStore()
       end
     end
     return
@@ -518,7 +470,6 @@ function update()
   watchdogCheck()
 end
 
-restoreStore()
 pruneOldEntries()
 publish()
 startNotifyWatch()

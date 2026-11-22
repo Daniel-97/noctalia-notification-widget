@@ -43,7 +43,7 @@ widget.
 
 | Setting | Type | Default | Description |
 | --- | --- | --- | --- |
-| `max_items` | int | 6 | Max notifications listed (stored cap is 30) |
+| `max_items` | int | 6 | Max notifications listed (in-memory cap is 30) |
 | `text_scale` | select | "1.3" | Content size: 100%–200% |
 | `show_body` | bool | false | Show the body under each summary line |
 | `list_mode` | select | "unread" | Unread only (clears when the control center opens) or all (rolling recap, click to empty) |
@@ -61,9 +61,10 @@ widget.
   with `pgrep` every 30 s). Noctalia v5 keeps its own history encrypted
   with no public unread API, so this is an approximation: "received since
   the list was last cleared", not the shell's exact unread model.
-- The list is persisted to `items.json` in the plugin data dir
-  (`$XDG_STATE_HOME/noctalia/plugins/data/<id>/`) and survives reloads and
-  restarts.
+- The list is memory-only by design: notification content (bodies,
+  contact names) never touches the disk, so service restarts (plugin
+  reloads, settings changes) start from an empty list. Privacy over
+  continuity.
 - App icons are resolved through `noctalia.appIconPath` (desktop-entry
   hint, then the notification's `app_icon`, then the app name); unknown
   senders get a generic glyph.
