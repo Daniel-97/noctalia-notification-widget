@@ -23,6 +23,10 @@ local function cfg(key, fallback)
   return v
 end
 
+-- Preview is a positioning aid: it shows whenever the list is empty and
+-- the setting is enabled. No auto-dismiss; turn the setting off when done.
+local previewOn = cfg("preview_when_empty", false) == true
+
 -- ------------------------------------------------------------------
 -- Texts: resolved from the plugin's own translation files, so a language
 -- override can be offered even though the shell follows the system
@@ -122,15 +126,54 @@ local function truncate(s, n)
   return string.sub(s, 1, n - 1) .. "…"
 end
 
--- Text size: the plugin API exposes no way to read the widget box size
--- chosen in the editor, so the content cannot auto-fit an enlarged box.
--- Instead the plugin renders at explicit sizes controlled by this setting.
-local scale = 1.3
+-- Invented sample entries for positioning the widget in the lockscreen
+-- editor. The editor shows an empty widget until real notifications
+-- arrive, so this is opt-in (preview_when_empty) and the header is marked
+-- as a preview. The count follows max_items so the reserved space matches
+-- the configured number of real notifications. Names and messages are
+-- deliberately fictional.
+local previewTemplates = {
+  { app = "Signal", summary = "John Doe", body = "Are we still on for tonight?", desktop = "org.signal.Signal" },
+  { app = "Signal", summary = "Jane Roe", body = "Thanks for the update!", desktop = "org.signal.Signal", count = 2 },
+  { app = "Thunderbird", summary = "This is a deliberately very long preview title that keeps going far beyond the card width so you can see exactly where the box clips it", body = "3 new messages in your inbox", desktop = "net.thunderbird.Thunderbird" },
+  { app = "Steam", summary = "Wishlist sale", body = "A game on your wishlist is 40% off", desktop = "com.valvesoftware.Steam", urgent = true },
+  { app = "Signal", summary = "Alex Smith", body = "Sent the photos!", desktop = "org.signal.Signal" },
+  { app = "Thunderbird", summary = "Calendar reminder", body = "Stand-up in 15 minutes", desktop = "net.thunderbird.Thunderbird" },
+}
 
-local function refreshScale()
-  local raw = tonumber(tostring(cfg("text_scale", "1.3"))) or 1.3
-  scale = math.max(0.8, math.min(2.5, raw))
+local function previewItems(n)
+  local now = os.time()
+  local result = {}
+  for i = 1, n do
+    local t = previewTemplates[(i - 1) % #previewTemplates + 1]
+    result[i] = {
+      app = t.app,
+      summary = t.summary,
+      body = t.body,
+      desktop = t.desktop,
+      receivedAt = now - (n - i + 1) * 300,
+      count = t.count or 1,
+      urgent = t.urgent or false,
+    }
+  end
+  -- The newest sample (displayed first with the default order) explains
+  -- itself, so the first card a user sees is the guide.
+  result[n] = {
+    app = trs("widget.preview_app", "Missed Notifications"),
+    summary = trs("widget.preview_title", "Test notification"),
+    body = trs("widget.preview_body",
+      "Sample cards for positioning. Turn off \"Preview sample notifications\" in the plugin settings."),
+    icon = "bell",
+    receivedAt = now - 60,
+    count = 1,
+  }
+  return result
 end
+
+-- The plugin API cannot read the box size chosen in the editor, so the
+-- content renders at fixed metrics; Noctalia owns the widget box and its
+-- scale. The card width is whatever the user sets on the box.
+local scale = 1.3
 
 local function fs(base)
   return math.floor(base * scale + 0.5)
@@ -323,14 +366,21 @@ local function displayName(item, lang)
 end
 
 local function render()
-  refreshScale()
   local items = type(state.items) == "table" and state.items or {}
   local count = #items
+  local rawMax = tonumber(cfg("max_items", 6)) or 6
+  local maxItems = math.max(1, math.min(20, rawMax))
+
+  local previewActive = false
+  if count == 0 and previewOn then
+    items = previewItems(maxItems)
+    count = #items
+    previewActive = true
+  end
 
   -- Title length also fixes the widget width: a fixed width stops the
   -- center-anchored widget from growing sideways with long titles, while
-  -- the height stays dynamic (the lockscreen only repaints fully on a
-  -- size change, so the height must keep changing with new items).
+  -- the height stays dynamic for the lockscreen repaint.
   local lengthMode = tostring(cfg("summary_length", "normal"))
   local summaryLimit = 60
   local widthBase = 340
@@ -344,15 +394,8 @@ local function render()
   local cardWidth = fs(widthBase)
 
   if count == 0 then
-    -- Optional: hide the widget entirely instead of showing the empty
-    -- state, for a clean lock backdrop.
-    if cfg("hide_when_empty", false) == true then
-      desktopWidget.setVisible(false)
-      return
-    end
     -- Empty state: keep the widget visible (dimmed) so its presence is
-    -- clear even with nothing to show. The fixed width keeps the widget
-    -- from shifting sideways when the first notification arrives.
+    -- clear even with nothing to show.
     desktopWidget.setVisible(true)
     desktopWidget.render(ui.column({ width = cardWidth }, {
       ui.row({ gap = fs(6), align = "center" }, {
@@ -363,33 +406,21 @@ local function render()
     return
   end
 
-  local rawMax = tonumber(cfg("max_items", 6)) or 6
-  local maxItems = math.max(1, math.min(20, rawMax))
   local showBody = cfg("show_body", false) == true
   local newestFirst = tostring(cfg("order", "newest")) ~= "oldest"
   local showIcons = cfg("show_icons", true) == true
   local showAge = cfg("show_age", true) == true
-  local density = tostring(cfg("card_density", "normal"))
-  local densityScale = 1.0
-  if density == "compact" then
-    densityScale = 0.75
-  elseif density == "roomy" then
-    densityScale = 1.3
-  end
   local cardBg = tostring(cfg("card_background", "subtle"))
 
   local header
-  local listMode = tostring(cfg("list_mode", "unread"))
-  if listMode == "all" then
-    if count == 1 then
-      header = trf("widget.header_all_one", 1, "1 recent notification")
-    else
-      header = trf("widget.header_all", count, "%d recent notifications")
-    end
-  elseif count == 1 then
+  if count == 1 then
     header = trf("widget.header_one", 1, "1 unread notification")
   else
     header = trf("widget.header", count, "%d unread notifications")
+  end
+
+  if previewActive then
+    header = trs("widget.preview", "Preview") .. " · " .. header
   end
 
   local children = {
@@ -414,8 +445,7 @@ local function render()
 
   for _, item in ipairs(visible) do
     local appName = displayName(item, resolveLang())
-    -- Truncation keeps the head line within a sane bound while letting
-    -- real titles breathe; the limit follows the user's setting.
+    -- Truncation keeps the head line within the title-length setting.
     local summary = truncate(item.summary, summaryLimit)
     -- Head parts: the app name renders bold, the summary stays regular,
     -- and the separator dot stands on its own label so the row gap
@@ -519,6 +549,7 @@ local function render()
     local cardFill = "on_surface/0.08"
     local cardBorder = "outline_variant/0.12"
     local cardBorderWidth = 1
+    local cardRadius = fs(8)
     if cardBg == "none" then
       cardFill = "on_surface/0"
       cardBorder = "outline_variant/0"
@@ -526,13 +557,20 @@ local function render()
     elseif cardBg == "solid" then
       cardFill = "surface_container"
       cardBorder = "outline_variant/0.25"
+    elseif cardBg == "glass" then
+      -- "Liquid glass": translucent frosted fill, brighter rim and softer
+      -- corners. The host has no backdrop blur for plugin trees, so this
+      -- is a translucency approximation.
+      cardFill = "surface_container/0.45"
+      cardBorder = "on_surface/0.22"
+      cardRadius = fs(14)
     end
     table.insert(children, ui.column({
       gap = fs(2),
       paddingH = fs(10),
-      paddingV = fs((hasBody and 7 or 13) * densityScale),
+      paddingV = hasBody and fs(7) or fs(13),
       width = cardWidth,
-      radius = fs(8),
+      radius = cardRadius,
       fill = cardFill,
       border = cardBorder,
       borderWidth = cardBorderWidth,
@@ -548,7 +586,7 @@ local function render()
   end
 
   desktopWidget.setVisible(true)
-  desktopWidget.render(ui.column({ gap = fs(8 * densityScale), width = cardWidth }, children))
+  desktopWidget.render(ui.column({ gap = fs(8), width = cardWidth }, children))
 end
 
 pcall(function()
@@ -570,14 +608,6 @@ function update()
     state = v
   end
   render()
-end
-
-function onClick()
-  state = { locked = state.locked or false, items = {}, count = 0 }
-  render()
-  pcall(function()
-    noctalia.state.set("control", { clear = true, at = os.time() })
-  end)
 end
 
 render()

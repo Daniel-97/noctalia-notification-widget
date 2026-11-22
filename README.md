@@ -33,11 +33,8 @@ widget.
 
 - While locked, the list shows notifications received and not yet
   acknowledged.
-- In unread mode the list empties when the control center is opened (the
-  closest observable event to Noctalia's own read marker) or when the
-  widget is clicked.
-- In all mode the list is a rolling recap of the last 30 notifications and
-  only empties on click.
+- The list empties when the control center is opened (the closest
+  observable event to Noctalia's own read marker).
 
 ## Settings
 
@@ -47,17 +44,13 @@ widget.
 | `group_notifications` | bool | true | Merge same app + title into one card with a count badge; off gives each notification its own card |
 | `show_icons` | bool | true | Show the sender icon or the app-provided image |
 | `show_age` | bool | true | Show the relative/absolute age on the right |
-| `summary_length` | select | "normal" | Title truncation (40/60/90 chars) and fixed widget width (≈364/442/520 px at 130%) |
-| `card_density` | select | "normal" | Vertical padding and gap: compact, normal, roomy |
-| `card_background` | select | "subtle" | Card look: subtle tint, solid surface, or no background |
-| `text_scale` | select | "1.3" | Content size: 100%–200% |
+| `card_background` | select | "subtle" | Card look: subtle tint, solid surface, liquid glass (translucent frosted fill with a bright rim), or no background |
+| `preview_when_empty` | bool | false | **Advanced.** Show invented example cards (as many as `max_items`) when the list is empty; the first card explains the setting. It stays until disabled |
 | `show_body` | bool | false | Show the body under each summary line |
-| `list_mode` | select | "unread" | Unread only (clears when the control center opens) or all (rolling recap, click to empty) |
 | `language` | select | "auto" | Widget texts language: auto (system locale), English, Italiano |
 | `order` | select | "newest" | Newest notifications at the top, or arrival order |
-| `age_format` | select | "relative" | Age as relative ("2 hours ago"), absolute ("18:42"), or both joined by a middle dot |
-| `max_age_hours` | int | 24 | Entries older than this many hours leave the list on their own; 0 keeps them forever |
-| `hide_when_empty` | bool | false | Hide the widget entirely instead of showing the empty state |
+| `age_format` | select | "relative" | **Advanced**, only when `show_age` is on. Age as relative ("2 hours ago"), absolute ("18:42"), or both joined by a middle dot |
+| `summary_length` | select | "normal" | Title truncation (40/60/90 chars) and fixed widget width (≈364/442/520 px at 130%) |
 
 ## Notes
 
@@ -81,9 +74,10 @@ widget.
   into one entry with an occurrence count (`(2)`, `(3)`...) and the
   latest body, wherever the older entry sits in the list; a grouped
   entry is renewed at the newest position.
-- Leave the widget box auto-fit (`box_width`/`box_height` `0.0`): a fixed
-  box set from the editor makes the host rescale the content, so text size
-  varies with the amount of content.
+- The card width follows the title-length setting (short/normal/long),
+  which keeps long titles from widening the widget. The height stays
+  dynamic so the lockscreen repaints fully; keep `box_height` auto-fit
+  (`0.0`) for that, since a fixed height can bring back partial repaints.
 - Notifications withdrawn by their sending app (read in the app itself,
   like chat apps marking as read) leave the list: the daemon-assigned ids
   are correlated through captured method returns, and `NotificationClosed`

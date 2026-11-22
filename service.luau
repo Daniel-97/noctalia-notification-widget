@@ -7,9 +7,8 @@
 --     the session state (locked or not);
 --   * consecutive notifications with the same app and summary update the
 --     last entry instead of piling up (chat apps resending);
---   * the list is cleared when the control center is opened (the "unread"
---     list mode only; the "all" mode keeps a rolling recap) or when the
---     widget is clicked (control channel);
+--   * the list is cleared when the control center is opened, the closest
+--     observable event to Noctalia's own "read" marker;
 --   * notifications withdrawn by their sending app (read in the app
 --     itself) leave the list: the daemon's assigned ids are correlated
 --     through the captured method returns, and NotificationClosed
@@ -65,34 +64,6 @@ local function clearList(reason)
 end
 
 -- ------------------------------------------------------------------
--- Age-based pruning: entries older than the configured hours leave the
--- list on their own (0 keeps them forever). Runs on every service tick,
--- which is cheap — the list is capped at MAX_STORED anyway.
--- ------------------------------------------------------------------
-local function pruneOldEntries()
-  local hours = tonumber(cfg("max_age_hours", 24)) or 0
-  if hours <= 0 then
-    return
-  end
-  local cutoff = os.time() - hours * 3600
-  local kept = {}
-  local removed = 0
-  for _, item in ipairs(items) do
-    local t = tonumber(item.receivedAt)
-    if type(t) == "number" and t < cutoff then
-      removed = removed + 1
-    else
-      table.insert(kept, item)
-    end
-  end
-  if removed > 0 then
-    items = kept
-    log("pruned " .. removed .. " expired notification(s)")
-    publish()
-  end
-end
-
--- ------------------------------------------------------------------
 -- Notification eavesdropping (dbus-monitor)
 -- ------------------------------------------------------------------
 -- Three kinds of captured messages matter:
@@ -121,6 +92,7 @@ end
 
 local msgKind = nil -- "notify" | "return" | "closed"
 local nStrings = {}
+local plainStringBuf = nil
 local closedValues = {}
 local hintKey = nil
 local hintDesktop = nil
@@ -267,6 +239,7 @@ local function resetMsg()
   flushNotify()
   msgKind = nil
   nStrings = {}
+  plainStringBuf = nil
   closedValues = {}
   hintKey = nil
   hintDesktop = nil
@@ -293,6 +266,25 @@ local function hintKeyFor(line)
 end
 
 local function handleNotifyLine(line)
+  -- A string value containing newlines is printed across several physical
+  -- lines by dbus-monitor. Keep consuming until the closing quote: without
+  -- this, the body is dropped and the next action id ("default") is taken
+  -- as the fourth string field.
+  if plainStringBuf ~= nil then
+    local prefix = line:match('^(.*)"%s*$')
+    if prefix ~= nil then
+      plainStringBuf = plainStringBuf .. "\n" .. prefix
+      local value = plainStringBuf
+      plainStringBuf = nil
+      if msgKind == "notify" and #nStrings < 4 then
+        table.insert(nStrings, unescapeDbus(value))
+      end
+    else
+      plainStringBuf = plainStringBuf .. "\n" .. line
+    end
+    return
+  end
+
   -- Header classification (order matters: specific members first).
   if line:find("member=Notify", 1, true) then
     resetMsg()
@@ -407,6 +399,11 @@ local function handleNotifyLine(line)
       table.insert(nStrings, unescapeDbus(s))
       return
     end
+    local start = line:match('^%s*string%s+"(.*)$')
+    if start then
+      plainStringBuf = start
+      return
+    end
   end
   -- Hints come after the body: look for known dict keys.
   hintKey = hintKeyFor(line)
@@ -462,13 +459,8 @@ end
 -- "Viewed" detection: the control center opening is the closest
 -- externally observable event to Noctalia's own "notifications tab
 -- opened" read marker. The tab itself is not distinguishable over IPC.
--- Only the "unread" list mode clears on it: "all" mode keeps a rolling
--- recap of the last notifications regardless of the read marker.
 -- ------------------------------------------------------------------
 local function centerOpenPoll()
-  if cfg("list_mode", "unread") ~= "unread" then
-    return
-  end
   noctalia.runAsync(
     "noctalia msg status",
     function(result)
@@ -479,24 +471,11 @@ local function centerOpenPoll()
     end)
 end
 
--- ------------------------------------------------------------------
--- Control channel (click-to-clear from the widget)
--- ------------------------------------------------------------------
-pcall(function()
-  noctalia.state.watch("control", function(value)
-    if type(value) == "table" and value.clear then
-      clearList("widget click")
-    end
-  end)
-end)
-
 function update()
   noctalia.setUpdateInterval(2000)
-  pruneOldEntries()
   centerOpenPoll()
   watchdogCheck()
 end
 
-pruneOldEntries()
 publish()
 startNotifyWatch()

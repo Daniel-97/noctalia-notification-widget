@@ -26,37 +26,21 @@
       "normal": "Normal (60)",
       "long": "Long (90)"
     },
-    "card_density": {
-      "label": "Card density",
-      "description": "Vertical padding and spacing between cards.",
-      "compact": "Compact",
-      "normal": "Normal",
-      "roomy": "Roomy"
-    },
     "card_background": {
       "label": "Card background",
       "description": "How strong the rounded background behind each notification is.",
       "subtle": "Subtle",
       "solid": "Solid",
+      "glass": "Liquid glass",
       "none": "None"
     },
-    "text_scale": {
-      "label": "Text size",
-      "description": "Content size. The plugin cannot read the box size set in the editor, so it renders at fixed sizes picked here.",
-      "small": "Small (100%)",
-      "medium": "Medium (130%)",
-      "large": "Large (160%)",
-      "huge": "Huge (200%)"
+    "preview_when_empty": {
+      "label": "Preview sample notifications",
+      "description": "Show as many invented example cards as Max items shown when the list is empty, so the widget can be positioned without waiting for real notifications. The header is marked Preview and the first card explains how to turn it off. It stays on until disabled."
     },
     "show_body": {
       "label": "Show body",
       "description": "Show the notification body under each summary line."
-    },
-    "list_mode": {
-      "label": "List mode",
-      "description": "Unread only: the list empties when the control center is opened. All: a rolling recap of the last notifications, never auto-cleared (click to empty).",
-      "unread": "Unread only",
-      "all": "All (recent)"
     },
     "language": {
       "label": "Language",
@@ -77,23 +61,17 @@
       "relative": "Relative (2 hours ago)",
       "absolute": "Absolute (18:42)",
       "both": "Both (2 hours ago · 18:42)"
-    },
-    "max_age": {
-      "label": "Maximum age (hours)",
-      "description": "Entries older than this many hours leave the list on their own. 0 keeps them forever."
-    },
-    "hide_empty": {
-      "label": "Hide when empty",
-      "description": "Hide the widget entirely instead of showing the empty state."
     }
   },
   "widget": {
     "header": "%d unread notifications",
     "header_one": "1 unread notification",
-    "header_all": "%d recent notifications",
-    "header_all_one": "1 recent notification",
     "more": "+ %d more",
     "empty": "No notifications",
+    "preview": "Preview",
+    "preview_app": "Missed Notifications",
+    "preview_title": "Test notification",
+    "preview_body": "Preview only. Disable it in the plugin settings.",
     "count": "(%d)",
     "age_now": "just now",
     "age_min_one": "1 minute ago",

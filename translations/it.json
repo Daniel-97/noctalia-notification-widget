@@ -26,37 +26,21 @@
       "normal": "Normale (60)",
       "long": "Lungo (90)"
     },
-    "card_density": {
-      "label": "Densità card",
-      "description": "Spaziatura verticale e distanza tra le card.",
-      "compact": "Compatta",
-      "normal": "Normale",
-      "roomy": "Ampia"
-    },
     "card_background": {
       "label": "Sfondo card",
       "description": "Quanto è marcato lo sfondo arrotondato dietro ogni notifica.",
       "subtle": "Sfumato",
       "solid": "Pieno",
+      "glass": "Vetro liquido",
       "none": "Nessuno"
     },
-    "text_scale": {
-      "label": "Dimensione testo",
-      "description": "Dimensione del contenuto. Il plugin non può leggere la dimensione del box impostata nell'editor, quindi disegna a dimensioni fisse scelte qui.",
-      "small": "Piccola (100%)",
-      "medium": "Media (130%)",
-      "large": "Grande (160%)",
-      "huge": "Molto grande (200%)"
+    "preview_when_empty": {
+      "label": "Anteprima di esempio",
+      "description": "Mostra tante card d'esempio inventate quanti sono gli Elementi mostrati, quando la lista è vuota, così puoi posizionare il widget senza aspettare notifiche reali. L'intestazione è marcata Anteprima e la prima card spiega come disattivarla. Resta attiva finché non la disattivi."
     },
     "show_body": {
       "label": "Mostra il corpo",
       "description": "Mostra il corpo della notifica sotto ogni titolo."
-    },
-    "list_mode": {
-      "label": "Modalità elenco",
-      "description": "Solo non lette: l'elenco si svuota quando apri il control center. Tutte: riepilogo continuo delle ultime notifiche, non si svuota da solo (clicca per svuotare).",
-      "unread": "Solo non lette",
-      "all": "Tutte (recenti)"
     },
     "language": {
       "label": "Lingua",
@@ -77,23 +61,17 @@
       "relative": "Relativa (2 ore fa)",
       "absolute": "Assoluta (18:42)",
       "both": "Entrambe (2 ore fa · 18:42)"
-    },
-    "max_age": {
-      "label": "Età massima (ore)",
-      "description": "Le voci più vecchie di questo numero di ore lasciano la lista da sole. 0 le mantiene per sempre."
-    },
-    "hide_empty": {
-      "label": "Nascondi quando vuota",
-      "description": "Nasconde del tutto il widget invece dello stato vuoto."
     }
   },
   "widget": {
     "header": "%d notifiche non lette",
     "header_one": "Una notifica non letta",
-    "header_all": "%d notifiche recenti",
-    "header_all_one": "Una notifica recente",
     "more": "+ altre %d",
     "empty": "Nessuna notifica",
+    "preview": "Anteprima",
+    "preview_app": "Notifiche perse",
+    "preview_title": "Notifica di prova",
+    "preview_body": "Solo anteprima. Disattivala nelle impostazioni del plugin.",
     "count": "(%d)",
     "age_now": "adesso",
     "age_min_one": "1 minuto fa",
