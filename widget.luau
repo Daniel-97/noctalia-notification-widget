@@ -3,6 +3,12 @@
 -- Renders the list published by the watcher service: a bell header with the
 -- count, then one line per notification (app · summary, body optional).
 -- Hidden when the list is empty. Click clears the list.
+--
+-- Keep the root height dynamic. Noctalia's lockscreen repaints a widget
+-- fully only when its size changes: a fixed height (fixed editor box or
+-- reserved placeholder slots) makes new notifications repaint just their
+-- own region while the screen stays locked, leaving older cards blank
+-- until the next unlock. Do not reserve a fixed height here.
 
 local state = noctalia.state.get("missed")
 if type(state) ~= "table" then
