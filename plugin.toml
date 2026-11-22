@@ -18,6 +18,63 @@ description_key = "settings.max_items.description"
 default = 6
 
 [[setting]]
+key = "group_notifications"
+type = "bool"
+label_key = "settings.group_notifications.label"
+description_key = "settings.group_notifications.description"
+default = true
+
+[[setting]]
+key = "show_icons"
+type = "bool"
+label_key = "settings.show_icons.label"
+description_key = "settings.show_icons.description"
+default = true
+
+[[setting]]
+key = "show_age"
+type = "bool"
+label_key = "settings.show_age.label"
+description_key = "settings.show_age.description"
+default = true
+
+[[setting]]
+key = "summary_length"
+type = "select"
+label_key = "settings.summary_length.label"
+description_key = "settings.summary_length.description"
+default = "normal"
+options = [
+  { value = "short", label_key = "settings.summary_length.short" },
+  { value = "normal", label_key = "settings.summary_length.normal" },
+  { value = "long", label_key = "settings.summary_length.long" },
+]
+
+[[setting]]
+key = "card_density"
+type = "select"
+label_key = "settings.card_density.label"
+description_key = "settings.card_density.description"
+default = "normal"
+options = [
+  { value = "compact", label_key = "settings.card_density.compact" },
+  { value = "normal", label_key = "settings.card_density.normal" },
+  { value = "roomy", label_key = "settings.card_density.roomy" },
+]
+
+[[setting]]
+key = "card_background"
+type = "select"
+label_key = "settings.card_background.label"
+description_key = "settings.card_background.description"
+default = "subtle"
+options = [
+  { value = "subtle", label_key = "settings.card_background.subtle" },
+  { value = "solid", label_key = "settings.card_background.solid" },
+  { value = "none", label_key = "settings.card_background.none" },
+]
+
+[[setting]]
 key = "text_scale"
 type = "select"
 label_key = "settings.text_scale.label"

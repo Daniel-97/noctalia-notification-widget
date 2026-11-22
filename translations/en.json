@@ -7,6 +7,39 @@
       "label": "Max items shown",
       "description": "Maximum number of notifications listed on the widget."
     },
+    "group_notifications": {
+      "label": "Group by sender",
+      "description": "Merge notifications with the same app and title into one card with a count badge. Turn off to give every notification its own card."
+    },
+    "show_icons": {
+      "label": "Show app icons",
+      "description": "Show the sender icon, or the image the app provided, at the start of each card."
+    },
+    "show_age": {
+      "label": "Show age",
+      "description": "Show how long ago each notification arrived, on the right of the card."
+    },
+    "summary_length": {
+      "label": "Title length",
+      "description": "How many characters of the title are shown before truncation. It also fixes the widget width: longer text, wider widget.",
+      "short": "Short (40)",
+      "normal": "Normal (60)",
+      "long": "Long (90)"
+    },
+    "card_density": {
+      "label": "Card density",
+      "description": "Vertical padding and spacing between cards.",
+      "compact": "Compact",
+      "normal": "Normal",
+      "roomy": "Roomy"
+    },
+    "card_background": {
+      "label": "Card background",
+      "description": "How strong the rounded background behind each notification is.",
+      "subtle": "Subtle",
+      "solid": "Solid",
+      "none": "None"
+    },
     "text_scale": {
       "label": "Text size",
       "description": "Content size. The plugin cannot read the box size set in the editor, so it renders at fixed sizes picked here.",

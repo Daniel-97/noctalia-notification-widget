@@ -7,6 +7,39 @@
       "label": "Elementi mostrati",
       "description": "Numero massimo di notifiche elencate nel widget."
     },
+    "group_notifications": {
+      "label": "Raggruppa per mittente",
+      "description": "Unisce le notifiche con stessa app e stesso titolo in una card con badge. Disattivalo per dare a ogni notifica una card separata."
+    },
+    "show_icons": {
+      "label": "Mostra icone app",
+      "description": "Mostra l'icona del mittente, o l'immagine fornita dall'app, all'inizio di ogni card."
+    },
+    "show_age": {
+      "label": "Mostra età",
+      "description": "Mostra da quanto tempo è arrivata ogni notifica, a destra della card."
+    },
+    "summary_length": {
+      "label": "Lunghezza titolo",
+      "description": "Quanti caratteri del titolo mostrare prima del troncamento. Fissa anche la larghezza del widget: testo più lungo, widget più largo.",
+      "short": "Corto (40)",
+      "normal": "Normale (60)",
+      "long": "Lungo (90)"
+    },
+    "card_density": {
+      "label": "Densità card",
+      "description": "Spaziatura verticale e distanza tra le card.",
+      "compact": "Compatta",
+      "normal": "Normale",
+      "roomy": "Ampia"
+    },
+    "card_background": {
+      "label": "Sfondo card",
+      "description": "Quanto è marcato lo sfondo arrotondato dietro ogni notifica.",
+      "subtle": "Sfumato",
+      "solid": "Pieno",
+      "none": "Nessuno"
+    },
     "text_scale": {
       "label": "Dimensione testo",
       "description": "Dimensione del contenuto. Il plugin non può leggere la dimensione del box impostata nell'editor, quindi disegna a dimensioni fisse scelte qui.",

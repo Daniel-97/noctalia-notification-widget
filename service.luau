@@ -197,24 +197,26 @@ local function onNotification(app, icon, summary, body, desktop, urgent, image)
   -- it sits in the list (a different notification in between must not
   -- split the group). The grouped entry keeps the latest body, counts
   -- the occurrences, and is renewed at the end of the list.
-  for i = #items, 1, -1 do
-    local item = items[i]
-    if item.app == app and item.summary == summary then
-      table.remove(items, i)
-      item.body = body
-      item.icon = icon
-      item.receivedAt = os.time()
-      item.count = (item.count or 1) + 1
-      if desktop then
-        item.desktop = desktop
+  if cfg("group_notifications", true) == true then
+    for i = #items, 1, -1 do
+      local item = items[i]
+      if item.app == app and item.summary == summary then
+        table.remove(items, i)
+        item.body = body
+        item.icon = icon
+        item.receivedAt = os.time()
+        item.count = (item.count or 1) + 1
+        if desktop then
+          item.desktop = desktop
+        end
+        if image then
+          item.image = image
+        end
+        item.urgent = urgent
+        table.insert(items, item)
+        publish()
+        return item
       end
-      if image then
-        item.image = image
-      end
-      item.urgent = urgent
-      table.insert(items, item)
-      publish()
-      return item
     end
   end
   local item = {

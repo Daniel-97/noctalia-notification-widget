@@ -44,6 +44,12 @@ widget.
 | Setting | Type | Default | Description |
 | --- | --- | --- | --- |
 | `max_items` | int | 6 | Max notifications listed (in-memory cap is 30) |
+| `group_notifications` | bool | true | Merge same app + title into one card with a count badge; off gives each notification its own card |
+| `show_icons` | bool | true | Show the sender icon or the app-provided image |
+| `show_age` | bool | true | Show the relative/absolute age on the right |
+| `summary_length` | select | "normal" | Title truncation (40/60/90 chars) and fixed widget width (≈364/442/520 px at 130%) |
+| `card_density` | select | "normal" | Vertical padding and gap: compact, normal, roomy |
+| `card_background` | select | "subtle" | Card look: subtle tint, solid surface, or no background |
 | `text_scale` | select | "1.3" | Content size: 100%–200% |
 | `show_body` | bool | false | Show the body under each summary line |
 | `list_mode` | select | "unread" | Unread only (clears when the control center opens) or all (rolling recap, click to empty) |

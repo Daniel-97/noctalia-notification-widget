@@ -325,7 +325,25 @@ end
 local function render()
   refreshScale()
   local items = type(state.items) == "table" and state.items or {}
-  if #items == 0 then
+  local count = #items
+
+  -- Title length also fixes the widget width: a fixed width stops the
+  -- center-anchored widget from growing sideways with long titles, while
+  -- the height stays dynamic (the lockscreen only repaints fully on a
+  -- size change, so the height must keep changing with new items).
+  local lengthMode = tostring(cfg("summary_length", "normal"))
+  local summaryLimit = 60
+  local widthBase = 340
+  if lengthMode == "short" then
+    summaryLimit = 40
+    widthBase = 280
+  elseif lengthMode == "long" then
+    summaryLimit = 90
+    widthBase = 400
+  end
+  local cardWidth = fs(widthBase)
+
+  if count == 0 then
     -- Optional: hide the widget entirely instead of showing the empty
     -- state, for a clean lock backdrop.
     if cfg("hide_when_empty", false) == true then
@@ -333,11 +351,14 @@ local function render()
       return
     end
     -- Empty state: keep the widget visible (dimmed) so its presence is
-    -- clear even with nothing to show.
+    -- clear even with nothing to show. The fixed width keeps the widget
+    -- from shifting sideways when the first notification arrives.
     desktopWidget.setVisible(true)
-    desktopWidget.render(ui.row({ gap = fs(6), align = "center" }, {
-      ui.glyph({ name = "bell", size = fs(15), color = "on_surface_variant" }),
-      ui.label({ text = trs("widget.empty", "No notifications"), fontSize = fs(14), color = "on_surface_variant" }),
+    desktopWidget.render(ui.column({ width = cardWidth }, {
+      ui.row({ gap = fs(6), align = "center" }, {
+        ui.glyph({ name = "bell", size = fs(15), color = "on_surface_variant" }),
+        ui.label({ text = trs("widget.empty", "No notifications"), fontSize = fs(14), color = "on_surface_variant" }),
+      }),
     }))
     return
   end
@@ -346,7 +367,16 @@ local function render()
   local maxItems = math.max(1, math.min(20, rawMax))
   local showBody = cfg("show_body", false) == true
   local newestFirst = tostring(cfg("order", "newest")) ~= "oldest"
-  local count = #items
+  local showIcons = cfg("show_icons", true) == true
+  local showAge = cfg("show_age", true) == true
+  local density = tostring(cfg("card_density", "normal"))
+  local densityScale = 1.0
+  if density == "compact" then
+    densityScale = 0.75
+  elseif density == "roomy" then
+    densityScale = 1.3
+  end
+  local cardBg = tostring(cfg("card_background", "subtle"))
 
   local header
   local listMode = tostring(cfg("list_mode", "unread"))
@@ -384,23 +414,30 @@ local function render()
 
   for _, item in ipairs(visible) do
     local appName = displayName(item, resolveLang())
-    -- Truncation at 60 keeps the head line within a sane bound while
-    -- letting real titles breathe.
-    local summary = truncate(item.summary, 60)
+    -- Truncation keeps the head line within a sane bound while letting
+    -- real titles breathe; the limit follows the user's setting.
+    local summary = truncate(item.summary, summaryLimit)
     -- Head parts: the app name renders bold, the summary stays regular,
     -- and the separator dot stands on its own label so the row gap
     -- spaces it evenly from both sides.
     local headParts = {}
     if appName and appName ~= "" and summary ~= "" then
-      table.insert(headParts, ui.label({ text = appName, fontSize = fs(12), fontWeight = "bold", color = "on_surface" }))
+      table.insert(headParts, ui.label({
+        text = appName,
+        fontSize = fs(12),
+        fontWeight = "bold",
+        color = "on_surface",
+        maxLines = 1,
+        maxWidth = math.floor(cardWidth * 0.38),
+      }))
       table.insert(headParts, ui.label({ text = " · ", fontSize = fs(12), color = "on_surface" }))
-      table.insert(headParts, ui.label({ text = summary, fontSize = fs(12), color = "on_surface" }))
+      table.insert(headParts, ui.label({ text = summary, fontSize = fs(12), color = "on_surface", maxLines = 1, flexGrow = 1 }))
     elseif summary ~= "" then
-      table.insert(headParts, ui.label({ text = summary, fontSize = fs(12), color = "on_surface" }))
+      table.insert(headParts, ui.label({ text = summary, fontSize = fs(12), color = "on_surface", maxLines = 1, flexGrow = 1 }))
     elseif (item.body or "") ~= "" then
-      table.insert(headParts, ui.label({ text = truncate(item.body, 60), fontSize = fs(12), color = "on_surface" }))
+      table.insert(headParts, ui.label({ text = truncate(item.body, summaryLimit), fontSize = fs(12), color = "on_surface", maxLines = 1, flexGrow = 1 }))
     else
-      table.insert(headParts, ui.label({ text = "?", fontSize = fs(12), color = "on_surface" }))
+      table.insert(headParts, ui.label({ text = "?", fontSize = fs(12), color = "on_surface", maxLines = 1, flexGrow = 1 }))
     end
     -- Critical notifications (urgency hint == 2) carry a small accent
     -- dot right after the title.
@@ -412,27 +449,29 @@ local function render()
     -- growing spacer pins the age to the card's right edge. The body
     -- hangs below, indented past the icon.
     local headChildren = {}
-    -- Optical alignment: a centered text label's glyph center sits a
-    -- touch lower than its box center, so a box-centered icon rides
-    -- slightly high; a hairline spacer on top nudges it down to match.
-    local iconElement
-    local provided = providedImagePath(item)
-    if provided then
-      -- The app shipped its own image: show it instead of the app icon.
-      iconElement = ui.image({ path = provided, width = fs(16), height = fs(16), fit = "contain" })
-    else
-      local ok, ipath = pcall(iconPathFor, item, fs(16))
-      if ok and ipath then
-        iconElement = ui.image({ path = ipath, width = fs(16), height = fs(16), fit = "contain" })
+    if showIcons then
+      -- Optical alignment: a centered text label's glyph center sits a
+      -- touch lower than its box center, so a box-centered icon rides
+      -- slightly high; a hairline spacer on top nudges it down to match.
+      local iconElement
+      local provided = providedImagePath(item)
+      if provided then
+        -- The app shipped its own image: show it instead of the app icon.
+        iconElement = ui.image({ path = provided, width = fs(16), height = fs(16), fit = "contain" })
       else
-        -- Unknown sender: generic glyph placeholder instead of no icon.
-        iconElement = ui.glyph({ name = "notification", size = fs(16), color = "on_surface_variant" })
+        local ok, ipath = pcall(iconPathFor, item, fs(16))
+        if ok and ipath then
+          iconElement = ui.image({ path = ipath, width = fs(16), height = fs(16), fit = "contain" })
+        else
+          -- Unknown sender: generic glyph placeholder instead of no icon.
+          iconElement = ui.glyph({ name = "notification", size = fs(16), color = "on_surface_variant" })
+        end
       end
+      table.insert(headChildren, ui.column({ gap = 0 }, {
+        ui.spacer({ height = fs(3) }),
+        iconElement,
+      }))
     end
-    table.insert(headChildren, ui.column({ gap = 0 }, {
-      ui.spacer({ height = fs(3) }),
-      iconElement,
-    }))
     for _, part in ipairs(headParts) do
       table.insert(headChildren, part)
     end
@@ -442,23 +481,25 @@ local function render()
         text = trf("widget.count", groupCount, "(%d)"),
         fontSize = fs(10),
         color = "on_surface_variant",
+        maxLines = 1,
       }))
     end
-    table.insert(headChildren, ui.column({ flexGrow = 1 }))
-    local age = formatAge(item.receivedAt)
-    if age then
-      table.insert(headChildren, ui.label({ text = age, fontSize = fs(10), color = "on_surface_variant" }))
+    if showAge then
+      local age = formatAge(item.receivedAt)
+      if age then
+        table.insert(headChildren, ui.label({ text = age, fontSize = fs(10), color = "on_surface_variant", maxLines = 1 }))
+      end
     end
 
     local hasBody = showBody and (item.body or "") ~= ""
     local cardChildren = { ui.row({ gap = fs(5), align = "center" }, headChildren) }
     if hasBody then
-      table.insert(cardChildren, ui.column({ paddingH = fs(21) }, {
+      table.insert(cardChildren, ui.column({ paddingH = showIcons and fs(21) or fs(4) }, {
         ui.label({
           text = item.body,
           fontSize = fs(11),
           color = "on_surface_variant",
-          maxWidth = fs(280),
+          maxWidth = math.max(fs(140), cardWidth - fs(60)),
           maxLines = 2,
         }),
       }))
@@ -475,15 +516,26 @@ local function render()
     -- top of the taller box, since columns align children from there).
     -- A minimum width keeps short titles from shrinking the card below
     -- the body-driven measure, so the stack stays uniform.
+    local cardFill = "on_surface/0.08"
+    local cardBorder = "outline_variant/0.12"
+    local cardBorderWidth = 1
+    if cardBg == "none" then
+      cardFill = "on_surface/0"
+      cardBorder = "outline_variant/0"
+      cardBorderWidth = 0
+    elseif cardBg == "solid" then
+      cardFill = "surface_container"
+      cardBorder = "outline_variant/0.25"
+    end
     table.insert(children, ui.column({
       gap = fs(2),
       paddingH = fs(10),
-      paddingV = hasBody and fs(7) or fs(13),
-      minWidth = fs(300),
+      paddingV = fs((hasBody and 7 or 13) * densityScale),
+      width = cardWidth,
       radius = fs(8),
-      fill = "on_surface/0.08",
-      border = "outline_variant/0.12",
-      borderWidth = 1,
+      fill = cardFill,
+      border = cardBorder,
+      borderWidth = cardBorderWidth,
     }, cardChildren))
   end
 
@@ -496,7 +548,7 @@ local function render()
   end
 
   desktopWidget.setVisible(true)
-  desktopWidget.render(ui.column({ gap = fs(8) }, children))
+  desktopWidget.render(ui.column({ gap = fs(8 * densityScale), width = cardWidth }, children))
 end
 
 pcall(function()
